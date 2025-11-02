@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# update-commands.sh — copy all scripts in this folder to /usr/local/bin
-# Adds a 'JY' prefix to each global command name.
+# DESC: Copies all scripts in this folder to /usr/local/bin
 
 set -euo pipefail
 
