@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# DESC: airpods.sh — connect, set audio sink, and show AirPods battery
+# DESC: Connect, disconnect, and show AirPods battery status
+# TAG: bluetooth, audio, airpods, headphones, wireless
+# ARG: [MAC_ADDRESS] - Bluetooth MAC address (optional, uses default)
+# EXAMPLE: jyairpods
+# EXAMPLE: jyairpods 0C:53:B7:8E:4A:62
 
 set -euo pipefail
 
@@ -37,13 +41,12 @@ fi
 log "Connecting to AirPods ($MAC)..."
 connected=false
 for i in {1..5}; do
-  if bluetoothctl connect "$MAC" | grep -q "Connection successful"; then
+  if bluetoothctl connect "$MAC" 2>&1 | grep -q "Connection successful"; then
     connected=true
     break
   fi
   sleep 2
 done
-
 
 if [ "$connected" = false ]; then
   log "Failed to connect to $MAC after 5 attempts."
@@ -52,37 +55,34 @@ fi
 
 log "Connected successfully!"
 
-# Show battery (left, right, case)
+# Show battery
 show_battery() {
     info=$(bluetoothctl info "$MAC")
-
     left=$(echo "$info" | grep "Battery Percentage (L)" | awk '{print $4}' || true)
     right=$(echo "$info" | grep "Battery Percentage (R)" | awk '{print $4}' || true)
     case_battery=$(echo "$info" | grep "Battery Percentage (Case)" | awk '{print $4}' || true)
 
     if [ -n "$left" ] || [ -n "$right" ] || [ -n "$case_battery" ]; then
-        [ -n "$left" ] && log "Left AirPod battery: $left%"
-        [ -n "$right" ] && log "Right AirPod battery: $right%"
-        [ -n "$case_battery" ] && log "Case battery: $case_battery%"
+        [ -n "$left" ] && log "Left AirPod: $left%"
+        [ -n "$right" ] && log "Right AirPod: $right%"
+        [ -n "$case_battery" ] && log "Case: $case_battery%"
     else
-        log "Battery info not available for $MAC."
+        log "Battery info not available."
     fi
 }
 
 show_battery
 
-# Optional: set audio sink
+# Set audio sink
 if command -v pactl >/dev/null; then
   mac_lower=$(echo "$MAC" | tr ':' '_' | tr '[:upper:]' '[:lower:]')
   sink=$(pactl list short sinks | grep "$mac_lower" | awk '{print $2}' | head -n1 || true)
   if [ -n "$sink" ]; then
-    log "Setting $sink as default sink."
+    log "Setting $sink as default audio output."
     pactl set-default-sink "$sink"
     for input in $(pactl list short sink-inputs | awk '{print $1}'); do
       pactl move-sink-input "$input" "$sink"
     done
-  else
-    log "No matching audio sink found for $mac_lower yet."
   fi
 fi
 
