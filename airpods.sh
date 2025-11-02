@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# airpods.sh — connect, set audio sink, and show AirPods battery
+# DESC: airpods.sh — connect, set audio sink, and show AirPods battery
 
 set -euo pipefail
 
