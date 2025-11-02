@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# DESC: Copy all scripts in this folder to /usr/local/bin as JY-prefixed commands
+# DESC: Copy all scripts in this folder to /usr/local/bin as jy-prefixed commands
 #       Handles both .sh and .py scripts
 #       Removes old commands not present in the Scripts folder
-#       Also creates a global 'JY' command that runs JYhelp
+#       Also creates a global 'jy' command that runs jyhelp
 
 set -euo pipefail
 
 SCRIPTS_DIR="$HOME/Scripts"
 
-echo "[*] Updating global JY commands from $SCRIPTS_DIR..."
+echo "[*] Updating global jy commands from $SCRIPTS_DIR..."
 
 # ---------------------------
 # Step 1: Install/update scripts (.sh and .py)
@@ -22,11 +22,11 @@ for script in "$SCRIPTS_DIR"/*.{sh,py}; do
   ext="${base_name##*.}"        # sh or py
   base_name="${base_name%.*}"   # remove extension
 
-  # Self-aware: if this is the update script itself, install as JYupdate
+  # Self-aware: if this is the update script itself, install as jyupdate
   if [ "$base_name" == "$(basename "$0" .sh)" ] || [ "$base_name" == "$(basename "$0" .py)" ]; then
-    name="JYupdate"
+    name="jyupdate"
   else
-    name="JY${base_name}"
+    name="jy${base_name}"
   fi
 
   target="/usr/local/bin/$name"
@@ -45,15 +45,15 @@ shopt -u nullglob
 # ---------------------------
 # Step 2: Cleanup old commands
 # ---------------------------
-echo "[*] Removing old JY commands not present in $SCRIPTS_DIR..."
-for installed in /usr/local/bin/JY*; do
+echo "[*] Removing old jy commands not present in $SCRIPTS_DIR..."
+for installed in /usr/local/bin/jy*; do
   [ -f "$installed" ] || continue
 
-  installed_name="$(basename "$installed")"       # e.g., JYairpods
-  cmd_name="${installed_name#JY}"                 # remove JY prefix
+  installed_name="$(basename "$installed")"       # e.g., jyairpods
+  cmd_name="${installed_name#jy}"                 # remove jy prefix
 
-  # Skip JYupdate and JYhelp
-  if [[ "$installed_name" == "JYupdate" || "$installed_name" == "JYhelp" || "$installed_name" == "JY" ]]; then
+  # Skip jyupdate and jyhelp
+  if [[ "$installed_name" == "jyupdate" || "$installed_name" == "jyhelp" || "$installed_name" == "jy" ]]; then
     continue
   fi
 
@@ -65,18 +65,18 @@ for installed in /usr/local/bin/JY*; do
 done
 
 # ---------------------------
-# Step 3: Create 'JY' shortcut to JYhelp
+# Step 3: Create 'jy' shortcut to jyhelp
 # ---------------------------
-if [ -f "/usr/local/bin/JYhelp" ]; then
-  sudo ln -sf /usr/local/bin/JYhelp /usr/local/bin/JY
-  echo "   → Created shortcut 'JY' to 'JYhelp'"
+if [ -f "/usr/local/bin/jyhelp" ]; then
+  sudo ln -sf /usr/local/bin/jyhelp /usr/local/bin/jy
+  echo "   → Created shortcut 'jy' to 'jyhelp'"
 fi
 
 # ---------------------------
 # Step 4: Summary
 # ---------------------------
-echo "[*] Installed JY commands:"
-ls /usr/local/bin | grep '^JY' | sort
+echo "[*] Installed jy commands:"
+ls /usr/local/bin | grep '^jy' | sort
 
-echo "[*] All scripts updated successfully! You can now run them anywhere using JY<commandname>."
-echo "[*] Tip: Run 'JY' to see the help menu."
+echo "[*] All scripts updated successfully! You can now run them anywhere using jy<commandname>."
+echo "[*] Tip: Run 'jy' to see the help menu."
