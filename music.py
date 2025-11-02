@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""
-JYmusic — Beautiful Spotify CLI controller
-
-Quick examples:
-  jymusic                           # Resume last session & show status
-  jymusic "bohemian rhapsody"       # Search and play song
-  jymusic next                      # Skip track
-  jymusic vol 80                    # Set volume
-  jymusic -p "chill vibes"          # Play playlist
-"""
+# DESC: JYmusic — Spotify CLI music handler
+# Quick examples:
+#  jymusic                           # Resume last session & show status
+#  jymusic "bohemian rhapsody"       # Search and play song
+#  jymusic next                      # Skip track
+#  jymusic vol 80                    # Set volume
+#  jymusic -p "chill vibes"          # Play playlist
 
 import os, sys, json, argparse
 from spotipy import Spotify
