@@ -12,13 +12,13 @@ Clone the repository and install all scripts as global commands by running "./up
 ---
 
 ## Example
-# Update all JY commands system-wide
+#### Update all JY commands system-wide
 JYupdate
-# Connect AirPods
+#### Connect AirPods
 JYairpods
-# Disconnect AirPods (same command toggles connection)
+#### Disconnect AirPods (same command toggles connection)
 JYairpods
-# List all available JY commands
+#### List all available JY commands
 JYhelp
 
 
