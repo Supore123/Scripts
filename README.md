@@ -1,38 +1,39 @@
 # JY Scripts
 
-A collection of my personal Linux shell utilities, installed as global commands prefixed with `JY`.
-These scripts automate common tasks like Bluetooth connections, audio setup, and system management.
+## Available Commands
 
----
+### JY
 
-## Installation
+No source file found
 
-Clone the repository and install all scripts as global commands by running "./update.sh" in Scripts:
+### JYairpods
 
----
+airpods.sh — connect, set audio sink, and show AirPods battery
 
-## Example
-#### Update all JY commands system-wide
-JYupdate
-#### Connect AirPods
-JYairpods
-#### Disconnect AirPods (same command toggles connection)
-JYairpods
-#### List all available JY commands
-JYhelp
+### JYmusic
 
+##### Resume last session silently
+JYmusic --resume --play
 
-Currently Available JY Commands:
+##### Play specific song (no interactive prompts)
+JYmusic --song "Bohemian Rhapsody"
 
-JYairpods           → Connect/disconnect AirPods, set sink, show battery
-JYupdate-commands   → Update all scripts globally as JY-prefixed commands
-JYhelp              → List all available JY commands
+##### Play playlist on specific device
+JYmusic --device "Kitchen Speaker" --playlist "Workout" --play
 
-Use any of the commands above directly (e.g. 'JYairpods').
+##### Quick controls (uses active device)
+JYmusic --next
+JYmusic --volume 50
+JYmusic --pause
 
+##### Interactive mode (no args)
+JYmusic
 
-# Updates
+### JYsysinfo
 
-Feel free to use any of the scripts or modify for your convience.
-All scripts must contain a # DESC: at the begininng to notify the helper command.
+Display detailed system info (CPU, RAM, Disk, GPU, Network, Uptime)
+
+### JYupdate
+
+Copy all scripts in this folder to /usr/local/bin as JY-prefixed commands
 

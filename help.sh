@@ -69,4 +69,4 @@ update_readme() {
 }
 
 # Uncomment the following line if you want README auto-update each time help is run
-# update_readme
+#update_readme
