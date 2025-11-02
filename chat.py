@@ -1,38 +1,186 @@
 #!/usr/bin/env python3
-# DESC: Ultra-intelligent chat assistant with deep script understanding
-# TAG: chat, assistant, ai, helper
+# DESC: Ultra-intelligent chat assistant with deep script understanding (maximum intelligence)
+# TAG: chat, assistant, ai, helper, jy
+"""
+Maximum intelligence jy assistant:
+  - Deep semantic understanding with word embeddings simulation
+  - Intent classification with confidence scoring
+  - Multi-step reasoning with dependency resolution
+  - Behavioral learning from execution patterns
+  - Advanced NLP: coreference resolution, entity extraction, context tracking
+  - Intelligent parameter inference and validation
+  - Proactive suggestions based on time/patterns/state
+"""
 
+from __future__ import annotations
+import ast
 import subprocess
 import json
 import re
+import shlex
+import sys
+import os
 from pathlib import Path
-from colorama import init, Fore, Style
+from collections import defaultdict, Counter
 from datetime import datetime
-from collections import defaultdict
+from colorama import init, Fore, Style
+from difflib import SequenceMatcher, get_close_matches
+from typing import Dict, List, Tuple, Optional, Set
+
+init(autoreset=True)
 
 # ---------------------------
 # Configuration
 # ---------------------------
-init(autoreset=True)
 SCRIPTS_DIR = Path.home() / "Scripts"
 BIN_DIR = Path("/usr/local/bin")
 HISTORY_FILE = Path.home() / ".jychat_history"
 CONTEXT_FILE = Path.home() / ".jychat_context.json"
 JY_PREFIX = "jy"
-MAX_HISTORY = 100
+MAX_HISTORY = 200
+EXEC_TIMEOUT = 45
 
 # ---------------------------
-# Deep Script Parser
+# Semantic Understanding Engine
 # ---------------------------
-class ScriptParser:
-    """Extract rich metadata from scripts"""
+class SemanticEngine:
+    """Simulates semantic understanding using word relationships and patterns"""
+
+    # Word embeddings simulation - related concepts
+    SEMANTIC_CLUSTERS = {
+        # Music/Audio cluster
+        "music": {"play", "song", "track", "tune", "audio", "spotify", "listen", "sound", "melody", "album", "artist"},
+        "control": {"next", "skip", "previous", "back", "pause", "stop", "resume", "forward", "rewind"},
+        "volume": {"volume", "loud", "quiet", "louder", "quieter", "mute", "unmute", "vol"},
+        "playlist": {"playlist", "queue", "list", "collection", "mix"},
+
+        # Bluetooth/Connection cluster
+        "bluetooth": {"bluetooth", "bt", "wireless", "pair", "pairing", "device"},
+        "airpods": {"airpods", "headphones", "earbuds", "earphones", "buds", "pods"},
+        "connect": {"connect", "pair", "link", "attach", "join", "sync"},
+        "disconnect": {"disconnect", "unpair", "detach", "separate"},
+        "battery": {"battery", "charge", "power", "percentage"},
+
+        # System/Info cluster
+        "system": {"system", "computer", "machine", "pc", "laptop"},
+        "info": {"info", "information", "stats", "statistics", "status", "details"},
+        "hardware": {"cpu", "ram", "memory", "disk", "gpu", "processor", "storage"},
+        "network": {"network", "internet", "connection", "wifi", "ip", "address"},
+
+        # File operations cluster
+        "notes": {"notes", "note", "writing", "text", "document", "docs"},
+        "git": {"git", "commit", "push", "pull", "version", "repository", "repo"},
+        "save": {"save", "commit", "push", "sync", "backup", "store"},
+        "file": {"file", "folder", "directory", "path"},
+
+        # Actions cluster
+        "show": {"show", "display", "view", "see", "list", "print", "get", "check"},
+        "run": {"run", "execute", "start", "launch", "open", "begin"},
+        "stop": {"stop", "end", "kill", "terminate", "close", "quit"},
+        "change": {"change", "modify", "update", "edit", "set", "configure", "adjust"},
+
+        # SSH/Remote cluster
+        "ssh": {"ssh", "remote", "server", "host", "terminal", "shell"},
+        "connect_remote": {"connect", "login", "access"},
+
+        # Time/Scheduling cluster
+        "time": {"time", "clock", "hour", "minute", "when"},
+        "schedule": {"schedule", "timer", "alarm", "reminder", "cron"},
+
+        # Utility cluster
+        "utility": {"utility", "tool", "helper", "utils", "util"},
+        "clear": {"clear", "clean", "wipe", "erase"},
+        "echo": {"echo", "print", "output", "say"},
+    }
+
+    # Intent patterns with confidence weights
+    INTENT_PATTERNS = {
+        "execute": {
+            "patterns": [r"\b(run|execute|start|launch|do|perform)\b", r"^(play|open|begin)"],
+            "weight": 1.0
+        },
+        "query": {
+            "patterns": [r"^(what|how|why|when|where|who)", r"\b(show|display|tell|check|get)\b"],
+            "weight": 0.9
+        },
+        "control": {
+            "patterns": [r"\b(next|skip|pause|stop|resume|previous|back|forward)\b"],
+            "weight": 1.0
+        },
+        "configure": {
+            "patterns": [r"\b(set|change|configure|adjust|modify)\b"],
+            "weight": 0.85
+        },
+        "connect": {
+            "patterns": [r"\b(connect|pair|link|join)\b"],
+            "weight": 0.95
+        },
+    }
 
     @staticmethod
-    def parse_script(file_path):
-        """Deep parse script for all metadata"""
-        with open(file_path, "r") as f:
-            content = f.read()
-            lines = content.splitlines()
+    def get_semantic_similarity(word1: str, word2: str) -> float:
+        """Calculate semantic similarity between two words"""
+        word1, word2 = word1.lower(), word2.lower()
+
+        # Exact match
+        if word1 == word2:
+            return 1.0
+
+        # Check if words share a semantic cluster
+        for cluster_words in SemanticEngine.SEMANTIC_CLUSTERS.values():
+            if word1 in cluster_words and word2 in cluster_words:
+                return 0.85
+
+        # Substring relationship
+        if word1 in word2 or word2 in word1:
+            return 0.7
+
+        # Edit distance similarity
+        return SequenceMatcher(None, word1, word2).ratio() * 0.6
+
+    @staticmethod
+    def extract_intent(text: str) -> Tuple[str, float]:
+        """Extract intent with confidence score"""
+        best_intent = "query"
+        best_confidence = 0.5
+
+        for intent, config in SemanticEngine.INTENT_PATTERNS.items():
+            for pattern in config["patterns"]:
+                if re.search(pattern, text, re.IGNORECASE):
+                    confidence = config["weight"]
+                    if confidence > best_confidence:
+                        best_intent = intent
+                        best_confidence = confidence
+
+        return best_intent, best_confidence
+
+    @staticmethod
+    def find_semantic_matches(query_words: Set[str], target_words: Set[str]) -> float:
+        """Find semantic matches between two word sets"""
+        if not query_words or not target_words:
+            return 0.0
+
+        total_score = 0.0
+        for qword in query_words:
+            best_match = max(
+                (SemanticEngine.get_semantic_similarity(qword, tword) for tword in target_words),
+                default=0.0
+            )
+            total_score += best_match
+
+        return total_score / len(query_words)
+
+# ---------------------------
+# Intelligent Script Analyzer
+# ---------------------------
+class ScriptAnalyzer:
+    """Deep analysis of script functionality and behavior"""
+
+    @staticmethod
+    def analyze_script(file_path: Path) -> Dict:
+        """Comprehensive script analysis"""
+        text = file_path.read_text(encoding="utf-8", errors="ignore")
+        lines = text.splitlines()
 
         metadata = {
             "type": "py" if file_path.suffix == ".py" else "sh",
@@ -40,1095 +188,1235 @@ class ScriptParser:
             "args": [],
             "tags": [],
             "examples": [],
-            "usage": [],
             "flags": [],
             "subcommands": {},
-            "requires": [],
-            "path": BIN_DIR / (JY_PREFIX + file_path.stem),
-            "name": file_path.stem
+            "path": None,
+            "name": file_path.stem,
+            "filename": str(file_path),
+
+            # Enhanced analysis
+            "behavior": ScriptAnalyzer._analyze_behavior(text, file_path.suffix),
+            "dependencies": ScriptAnalyzer._extract_dependencies(text),
+            "side_effects": ScriptAnalyzer._detect_side_effects(text),
+            "input_types": ScriptAnalyzer._infer_input_types(text),
+            "output_format": ScriptAnalyzer._infer_output_format(text),
+            "keywords": set(),
+            "action_verbs": set(),
+            "entities": set(),
         }
 
-        # Extract DESC
+        # Extract metadata comments
         for line in lines:
-            if line.strip().startswith("# DESC:"):
-                metadata["desc"] = line.replace("# DESC:", "").strip()
-                break
+            s = line.strip()
+            if s.startswith("# DESC:"):
+                metadata["desc"] = s.split(":", 1)[1].strip()
+            elif s.startswith("# ARG:"):
+                metadata["args"].append(s.split(":", 1)[1].strip())
+            elif s.startswith("# TAG:"):
+                metadata["tags"].extend([t.strip() for t in s.split(":", 1)[1].split(",") if t.strip()])
+            elif s.startswith("# EXAMPLE:"):
+                metadata["examples"].append(s.split(":", 1)[1].strip())
 
-        # Extract all metadata
-        for line in lines:
-            line = line.strip()
-            if line.startswith("# ARG:"):
-                metadata["args"].append(line.replace("# ARG:", "").strip())
-            elif line.startswith("# TAG:"):
-                metadata["tags"].extend([t.strip() for t in line.replace("# TAG:", "").split(",")])
-            elif line.startswith("# EXAMPLE:"):
-                metadata["examples"].append(line.replace("# EXAMPLE:", "").strip())
-
-        # Parse argparse for Python scripts
+        # Parse structure
         if metadata["type"] == "py":
-            ScriptParser._parse_python_args(content, metadata)
-        # Parse case statements for bash scripts
-        elif metadata["type"] == "sh":
-            ScriptParser._parse_bash_args(content, metadata)
+            ScriptAnalyzer._parse_python(text, metadata)
+        else:
+            ScriptAnalyzer._parse_bash(text, metadata)
+
+        # Extract keywords from all text
+        metadata["keywords"] = ScriptAnalyzer._extract_keywords(text, metadata)
+        metadata["action_verbs"] = ScriptAnalyzer._extract_action_verbs(text)
+        metadata["entities"] = ScriptAnalyzer._extract_entities(text, metadata)
 
         return metadata
 
     @staticmethod
-    def _parse_python_args(content, metadata):
-        """Extract argparse arguments from Python scripts"""
-        # Find add_argument calls
-        arg_pattern = r'add_argument\([\'"]([^"\']+)[\'"].*?help=[\'"]([^"\']+)[\'"]'
-        for match in re.finditer(arg_pattern, content, re.DOTALL):
-            flag = match.group(1)
-            help_text = match.group(2)
-            metadata["flags"].append(f"{flag} - {help_text}")
-
-        # Also check for positional arguments
-        positional_pattern = r'add_argument\([\'"]([a-z_]+)[\'"].*?help=[\'"]([^"\']+)[\'"]'
-        for match in re.finditer(positional_pattern, content):
-            arg = match.group(1)
-            if not arg.startswith("-"):
-                help_text = match.group(2)
-                if f"{arg} - {help_text}" not in metadata["flags"]:
-                    metadata["args"].append(f"{arg} - {help_text}")
-
-    @staticmethod
-    def _parse_bash_args(content, metadata):
-        """Extract case statements and functions from bash scripts"""
-        # Find case options
-        case_pattern = r'case.*?in(.*?)esac'
-        matches = re.findall(case_pattern, content, re.DOTALL)
-        for match in matches:
-            # Extract individual cases
-            option_pattern = r'([a-z_-]+)\)'
-            options = re.findall(option_pattern, match)
-            for opt in options:
-                if opt not in ["*", "help"]:
-                    metadata["subcommands"][opt] = f"Subcommand: {opt}"
-
-# ---------------------------
-# Enhanced Knowledge Base
-# ---------------------------
-class KnowledgeBase:
-    """Deep semantic understanding with script-specific knowledge"""
-
-    SEMANTIC_GROUPS = {
-        "media": ["play", "music", "audio", "video", "sound", "movie", "stream", "spotify", "airpods"],
-        "file_ops": ["copy", "move", "delete", "backup", "sync", "file", "folder", "directory", "notes"],
-        "network": ["download", "upload", "fetch", "url", "web", "internet", "api", "curl", "ssh", "connect"],
-        "system": ["process", "kill", "monitor", "status", "system", "cpu", "memory", "disk", "info", "sysinfo"],
-        "notification": ["notify", "alert", "remind", "message", "send", "tell"],
-        "search": ["find", "search", "locate", "grep", "look"],
-        "text": ["edit", "write", "read", "text", "note", "document"],
-        "dev": ["code", "compile", "build", "test", "deploy", "git", "commit", "update"],
-        "bluetooth": ["bluetooth", "airpods", "connect", "pair", "device", "audio"],
-        "utils": ["utility", "helper", "tool", "utils", "clear", "echo", "date", "disk", "mem"]
-    }
-
-    # Command-specific synonyms learned from your scripts
-    COMMAND_SYNONYMS = {
-        "music": ["play music", "spotify", "play song", "tune", "track", "playlist", "skip", "pause", "next", "previous", "volume"],
-        "airpods": ["connect airpods", "bluetooth", "headphones", "pair", "battery"],
-        "sysinfo": ["system info", "system status", "stats", "computer info", "hardware", "specs"],
-        "ssh": ["remote", "server", "connect to", "terminal"],
-        "notes": ["commit notes", "push notes", "save notes", "sync notes", "backup notes"],
-        "utils": ["utility", "echo", "clear screen", "disk space", "memory", "list files"],
-        "update": ["update scripts", "refresh commands", "install scripts"]
-    }
-
-    ACTION_VERBS = {
-        "start": ["start", "begin", "launch", "open", "run", "execute", "play", "turn on", "enable"],
-        "stop": ["stop", "end", "terminate", "kill", "close", "turn off", "quit", "pause"],
-        "show": ["show", "display", "list", "print", "get", "view", "see", "check", "status"],
-        "modify": ["change", "update", "modify", "edit", "set", "configure", "adjust"],
-        "create": ["create", "make", "new", "add", "generate", "write"],
-        "delete": ["delete", "remove", "clear", "clean", "purge"],
-        "connect": ["connect", "pair", "link", "join", "attach"],
-        "disconnect": ["disconnect", "unpair", "unlink", "detach"],
-        "sync": ["sync", "synchronize", "backup", "save", "commit", "push"]
-    }
-
-    @staticmethod
-    def categorize_command(cmd_info):
-        """Enhanced categorization with script-specific knowledge"""
-        text = (cmd_info["desc"] + " " + " ".join(cmd_info.get("tags", []))).lower()
-        categories = []
-
-        for category, keywords in KnowledgeBase.SEMANTIC_GROUPS.items():
-            if any(kw in text for kw in keywords):
-                categories.append(category)
-
-        # Add category based on command name
-        name = cmd_info["name"].lower()
-        if "music" in name:
-            categories.append("media")
-        if "ssh" in name:
-            categories.append("network")
-        if "note" in name:
-            categories.append("file_ops")
-        if "info" in name or "sys" in name:
-            categories.append("system")
-        if "airpod" in name or "bluetooth" in name:
-            categories.append("bluetooth")
-
-        return list(set(categories)) or ["general"]
-
-    @staticmethod
-    def extract_action(user_input):
-        """Enhanced action extraction with music-specific commands"""
-        text = user_input.lower()
-
-        # Music-specific actions
-        music_actions = {
-            "skip": "next", "next": "next", "forward": "next",
-            "back": "previous", "previous": "previous", "prev": "previous",
-            "pause": "stop", "resume": "start", "unpause": "start",
-            "shuffle": "shuffle", "random": "shuffle",
-            "volume": "modify", "vol": "modify"
+    def _analyze_behavior(text: str, suffix: str) -> Dict:
+        """Analyze what the script actually does"""
+        behavior = {
+            "is_interactive": False,
+            "is_long_running": False,
+            "modifies_files": False,
+            "network_access": False,
+            "system_changes": False,
+            "background_suitable": False,
         }
 
-        for trigger, action in music_actions.items():
-            if trigger in text:
-                return action
+        # Interactive indicators
+        if re.search(r'\binput\(|raw_input\(|read\s+-p', text):
+            behavior["is_interactive"] = True
 
-        # Standard actions
-        for action, verbs in KnowledgeBase.ACTION_VERBS.items():
-            if any(verb in text for verb in verbs):
-                return action
+        # Long running indicators
+        if re.search(r'\bwhile\s+True|while\s+\d+|for\s+i\s+in\s+range\(\d{3,}', text):
+            behavior["is_long_running"] = True
 
-        return "query"
+        # File modifications
+        if re.search(r'\bopen\([^)]+["\']w["\']|write\(|>>|touch\s+|rm\s+|mv\s+', text):
+            behavior["modifies_files"] = True
 
-    @staticmethod
-    def find_synonyms(query, cmd_name):
-        """Check if query matches command synonyms"""
-        query = query.lower()
-        if cmd_name in KnowledgeBase.COMMAND_SYNONYMS:
-            synonyms = KnowledgeBase.COMMAND_SYNONYMS[cmd_name]
-            for syn in synonyms:
-                if syn in query:
-                    return True
-        return False
+        # Network access
+        if re.search(r'\brequests\.|urllib|curl|wget|http|api|fetch', text, re.IGNORECASE):
+            behavior["network_access"] = True
 
-# ---------------------------
-# Conversation Context with Learning
-# ---------------------------
-class ConversationContext:
-    """Enhanced context with multi-turn awareness"""
+        # System changes
+        if re.search(r'\bsudo|systemctl|service|apt|yum|pacman|chmod|chown', text):
+            behavior["system_changes"] = True
 
-    def __init__(self):
-        self.data = self.load()
-        self.session_history = []
-        self.last_command = None
-        self.last_topic = None
-        self.last_action = None
-        self.active_device = None
-        self.user_patterns = defaultdict(int)
-        self.pending_confirmation = None
+        # Background suitable (servers, monitors, music players)
+        if re.search(r'\bserver|daemon|monitor|watch|music|stream|spotify', text, re.IGNORECASE):
+            behavior["background_suitable"] = True
 
-    def load(self):
-        if CONTEXT_FILE.exists():
-            try:
-                with open(CONTEXT_FILE, "r") as f:
-                    data = json.load(f)
-                # Ensure all required keys exist
-                defaults = {
-                    "command_frequency": {},
-                    "successful_patterns": [],
-                    "preferences": {},
-                    "command_history": [],
-                    "favorite_commands": [],
-                    "device_preferences": {},
-                    "music_preferences": {}
-                }
-                for key, default_value in defaults.items():
-                    if key not in data:
-                        data[key] = default_value
-                return data
-            except (json.JSONDecodeError, Exception):
-                # If file is corrupted, return defaults
-                return self._get_defaults()
-        return self._get_defaults()
-
-    def _get_defaults(self):
-        """Return default context structure"""
-        return {
-            "command_frequency": {},
-            "successful_patterns": [],
-            "preferences": {},
-            "command_history": [],
-            "favorite_commands": [],
-            "device_preferences": {},
-            "music_preferences": {}
-        }
-
-    def save(self):
-        """Save context with error handling"""
-        try:
-            # Ensure directory exists
-            CONTEXT_FILE.parent.mkdir(parents=True, exist_ok=True)
-            with open(CONTEXT_FILE, "w") as f:
-                json.dump(self.data, f, indent=2)
-        except Exception as e:
-            print(f"{Fore.YELLOW}⚠️  Could not save context: {e}{Style.RESET_ALL}")
-
-    def record_command(self, cmd, args, success):
-        """Record with enhanced pattern learning"""
-        # Ensure command_history exists
-        if "command_history" not in self.data:
-            self.data["command_history"] = []
-        if "successful_patterns" not in self.data:
-            self.data["successful_patterns"] = []
-        if "command_frequency" not in self.data:
-            self.data["command_frequency"] = {}
-        if "favorite_commands" not in self.data:
-            self.data["favorite_commands"] = []
-
-        entry = {
-            "command": cmd,
-            "args": args,
-            "success": success,
-            "timestamp": datetime.now().isoformat(),
-            "context": self.last_topic,
-            "action": self.last_action
-        }
-        self.data["command_history"].append(entry)
-        self.data["command_history"] = self.data["command_history"][-100:]
-
-        if success:
-            pattern = f"{self.last_action}:{cmd}" if self.last_action else cmd
-            self.data["successful_patterns"].append(pattern)
-
-            # Track favorites
-            freq = self.data["command_frequency"].get(cmd, 0) + 1
-            self.data["command_frequency"][cmd] = freq
-
-            if freq > 10 and cmd not in self.data["favorite_commands"]:
-                self.data["favorite_commands"].append(cmd)
-
-        self.last_command = cmd
-        self.save()
-
-    def get_likely_command(self, topic):
-        """Predict with multi-signal approach"""
-        candidates = []
-
-        # Pattern-based
-        patterns = [p for p in self.data["successful_patterns"] if topic in p]
-        if patterns:
-            cmds = [p.split(":")[-1] for p in patterns]
-            candidates.append((max(set(cmds), key=cmds.count), 0.8))
-
-        # Frequency-based
-        if self.data["command_frequency"]:
-            top = max(self.data["command_frequency"].items(), key=lambda x: x[1])
-            candidates.append((top[0], 0.5))
-
-        return candidates[0][0] if candidates else None
-
-    def add_to_session(self, user_msg, bot_msg):
-        """Session memory with context retention"""
-        self.session_history.append({
-            "user": user_msg,
-            "bot": bot_msg,
-            "time": datetime.now(),
-            "command": self.last_command,
-            "topic": self.last_topic
-        })
-        self.session_history = self.session_history[-30:]
-
-    def get_context_clues(self):
-        """Extract context from recent conversation"""
-        if not self.session_history:
-            return {}
-
-        recent = self.session_history[-3:]
-        clues = {
-            "recent_commands": [h["command"] for h in recent if h["command"]],
-            "recent_topics": [h["topic"] for h in recent if h["topic"]],
-            "last_action": self.last_action
-        }
-        return clues
-
-# ---------------------------
-# Load scripts with deep parsing
-# ---------------------------
-script_context = {}
-for file in SCRIPTS_DIR.glob("*.[ps][hy]*"):
-    if file.name.startswith("."):
-        continue
-    info = ScriptParser.parse_script(file)
-    info["categories"] = KnowledgeBase.categorize_command(info)
-    script_context[file.stem] = info
-
-context = ConversationContext()
-
-# ---------------------------
-# Advanced NLU Engine
-# ---------------------------
-class NLUEngine:
-    """Natural Language Understanding with context awareness"""
+        return behavior
 
     @staticmethod
-    def parse(user_input, conversation_ctx):
-        """Deep parsing with context and pronoun resolution"""
-        text = user_input.lower().strip()
-        words = text.split()
+    def _extract_dependencies(text: str) -> List[str]:
+        """Extract external dependencies"""
+        deps = set()
 
-        # Resolve pronouns and references
-        if any(w in text for w in ["it", "that", "same", "again"]):
-            if conversation_ctx.last_command:
-                text = text.replace("it", conversation_ctx.last_command)
-                text = text.replace("that", conversation_ctx.last_command)
+        # Python imports
+        for match in re.finditer(r'^\s*(?:import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.]*)', text, re.MULTILINE):
+            deps.add(match.group(1).split('.')[0])
 
-        entities = {
-            "action": KnowledgeBase.extract_action(text),
-            "commands": [],
-            "parameters": [],
-            "temporal": NLUEngine.extract_temporal(text),
-            "category": None,
-            "intensity": NLUEngine.extract_intensity(text),
-            "question_type": NLUEngine.detect_question(text),
-            "music_intent": NLUEngine.extract_music_intent(text),
-            "raw_text": user_input
+        # Command executions
+        for match in re.finditer(r'(?:subprocess|os\.system|Popen)\(["\']([a-z][a-z0-9_-]+)', text):
+            deps.add(match.group(1))
+
+        # Bash commands
+        for match in re.finditer(r'(?:^|\||\$\()\s*([a-z][a-z0-9_-]+)\s+', text, re.MULTILINE):
+            cmd = match.group(1)
+            if cmd not in ["if", "then", "else", "fi", "do", "done", "for", "while", "case", "esac"]:
+                deps.add(cmd)
+
+        return sorted(deps)
+
+    @staticmethod
+    def _detect_side_effects(text: str) -> List[str]:
+        """Detect potential side effects"""
+        effects = []
+
+        dangerous_patterns = {
+            "file_deletion": r'\brm\s+-rf|shutil\.rmtree|os\.remove',
+            "system_modification": r'\bsudo|apt|yum|systemctl',
+            "network_modification": r'\biptables|firewall|ufw',
+            "process_killing": r'\bkill\s+-9|pkill|killall',
         }
 
-        # Direct command detection
-        for cmd_name, cmd_info in script_context.items():
-            if cmd_name in text:
-                entities["commands"].append(cmd_name)
-                continue
+        for effect_name, pattern in dangerous_patterns.items():
+            if re.search(pattern, text):
+                effects.append(effect_name)
 
-            # Synonym matching
-            if KnowledgeBase.find_synonyms(text, cmd_name):
-                entities["commands"].append(cmd_name)
-                continue
+        return effects
 
-            # Tag matching
-            for tag in cmd_info.get("tags", []):
-                if tag.lower() in text:
-                    entities["commands"].append(cmd_name)
-                    break
+    @staticmethod
+    def _infer_input_types(text: str) -> List[str]:
+        """Infer what types of inputs the script expects"""
+        types = set()
 
-        # Category detection
-        if not entities["commands"]:
-            for category, keywords in KnowledgeBase.SEMANTIC_GROUPS.items():
-                if any(kw in text for kw in keywords):
-                    entities["category"] = category
-                    break
+        patterns = {
+            "file_path": r'(?:path|file|dir|directory).*["\']?/|\.exists\(\)|Path\(',
+            "url": r'https?://|url.*=',
+            "number": r'int\(|float\(|\d+',
+            "text": r'str\(|input\(|read.*line',
+            "boolean": r'--.*flag|action=["\']store_true',
+        }
 
-        # Parameter extraction
-        entities["parameters"] = NLUEngine.extract_parameters(user_input, entities)
+        for input_type, pattern in patterns.items():
+            if re.search(pattern, text, re.IGNORECASE):
+                types.add(input_type)
+
+        return sorted(types)
+
+    @staticmethod
+    def _infer_output_format(text: str) -> str:
+        """Infer the output format"""
+        if re.search(r'json\.dump|\.json\(', text):
+            return "json"
+        elif re.search(r'\.csv|DataFrame', text):
+            return "csv"
+        elif re.search(r'print.*table|tabulate', text):
+            return "table"
+        elif re.search(r'subprocess|Popen.*stdout', text):
+            return "command_output"
+        else:
+            return "text"
+
+    @staticmethod
+    def _extract_keywords(text: str, metadata: Dict) -> Set[str]:
+        """Extract meaningful keywords"""
+        # Combine all text sources
+        all_text = (
+            metadata.get("desc", "") + " " +
+            " ".join(metadata.get("tags", [])) + " " +
+            " ".join(metadata.get("examples", [])) + " " +
+            text[:2000]  # Sample of actual code
+        )
+
+        # Extract words
+        words = re.findall(r'\b[a-z][a-z0-9_]{2,}\b', all_text.lower())
+
+        # Filter stopwords
+        stopwords = {"the", "and", "for", "with", "this", "that", "from", "have", "has", "will", "can", "are", "was", "were"}
+        keywords = {w for w in words if w not in stopwords and len(w) > 2}
+
+        return keywords
+
+    @staticmethod
+    def _extract_action_verbs(text: str) -> Set[str]:
+        """Extract action verbs from script"""
+        common_verbs = {
+            "play", "stop", "pause", "start", "run", "execute", "connect", "disconnect",
+            "show", "display", "print", "list", "get", "set", "update", "modify",
+            "create", "delete", "remove", "add", "sync", "backup", "restore",
+            "open", "close", "kill", "restart", "reload", "refresh"
+        }
+
+        found_verbs = set()
+        for verb in common_verbs:
+            if re.search(r'\b' + verb + r'\b', text, re.IGNORECASE):
+                found_verbs.add(verb)
+
+        return found_verbs
+
+    @staticmethod
+    def _extract_entities(text: str, metadata: Dict) -> Set[str]:
+        """Extract named entities (proper nouns, services, etc.)"""
+        entities = set()
+
+        # Look for capitalized words (proper nouns)
+        entities.update(re.findall(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)*)\b', text))
+
+        # Common services
+        services = ["Spotify", "Bluetooth", "Git", "SSH", "Docker", "systemd"]
+        for service in services:
+            if service.lower() in text.lower():
+                entities.add(service)
 
         return entities
 
     @staticmethod
-    def extract_parameters(user_input, entities):
-        """Smart parameter extraction"""
-        params = []
+    def _parse_python(text: str, metadata: Dict):
+        """Parse Python-specific structures"""
+        try:
+            tree = ast.parse(text)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    if node.func.attr == "add_argument":
+                        name, help_text = None, None
+                        for arg in node.args:
+                            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                                name = arg.value
+                        for kw in node.keywords:
+                            if kw.arg == "help" and isinstance(kw.value, ast.Constant):
+                                help_text = kw.value.value
+                        if name and help_text:
+                            metadata["flags"].append(f"{name} - {help_text}")
+        except:
+            pass
 
-        # Quoted strings
-        params.extend(re.findall(r'"([^"]*)"', user_input))
-        params.extend(re.findall(r"'([^']*)'", user_input))
+    @staticmethod
+    def _parse_bash(text: str, metadata: Dict):
+        """Parse Bash-specific structures"""
+        # Case statements
+        for match in re.finditer(r'case\s+[^;]+in(.*?)esac', text, re.DOTALL):
+            block = match.group(1)
+            for opt in re.findall(r'([a-zA-Z0-9_-]+)\)', block):
+                if opt not in ["*", "help"]:
+                    metadata["subcommands"][opt] = f"Subcommand: {opt}"
 
-        # Paths
-        params.extend(re.findall(r'(/[^\s]+)', user_input))
-        params.extend(re.findall(r'(~/[^\s]+)', user_input))
+# ---------------------------
+# Context-Aware Conversation Manager
+# ---------------------------
+class ConversationManager:
+    """Manages conversation state with deep context tracking"""
 
-        # Numbers (volume, etc)
-        numbers = re.findall(r'\b(\d+)\b', user_input)
-        params.extend(numbers)
+    def __init__(self):
+        self.data = self._load()
+        self.session_history = []
+        self.last_command = None
+        self.last_action = None
+        self.conversation_state = "idle"
+        self.pending_confirmation = None
 
-        # Song names without quotes
-        if entities["music_intent"]:
-            # Extract song name after keywords
-            song_pattern = r'(?:play|song|track)\s+(.+?)(?:\s+on|\s+at|\s+volume|$)'
-            match = re.search(song_pattern, user_input.lower())
-            if match:
-                song = match.group(1).strip()
-                if song and song not in params:
-                    params.append(song)
+    def _load(self) -> Dict:
+        defaults = {
+            "command_frequency": {},
+            "successful_patterns": [],
+            "command_history": [],
+            "favorite_commands": [],
+            "learned_associations": {},
+            "time_patterns": {},
+            "error_patterns": {},
+        }
+
+        if CONTEXT_FILE.exists():
+            try:
+                data = json.loads(CONTEXT_FILE.read_text())
+                for k, v in defaults.items():
+                    data.setdefault(k, v)
+                return data
+            except:
+                return defaults
+        return defaults
+
+    def save(self):
+        try:
+            CONTEXT_FILE.parent.mkdir(parents=True, exist_ok=True)
+            CONTEXT_FILE.write_text(json.dumps(self.data, indent=2))
+        except Exception as e:
+            print(f"{Fore.YELLOW}⚠️ Could not save context: {e}{Style.RESET_ALL}")
+
+    def record_command(self, name: str, args: List[str], success: bool):
+        """Record with behavioral learning"""
+        entry = {
+            "command": name,
+            "args": args,
+            "success": success,
+            "timestamp": datetime.now().isoformat(),
+            "action": self.last_action,
+            "context": self.conversation_state,
+        }
+
+        self.data["command_history"].append(entry)
+        self.data["command_history"] = self.data["command_history"][-MAX_HISTORY:]
+
+        if success:
+            # Learn patterns
+            pattern = f"{self.last_action}:{name}" if self.last_action else name
+            self.data["successful_patterns"].append(pattern)
+
+            # Track frequency
+            freq = self.data["command_frequency"]
+            freq[name] = freq.get(name, 0) + 1
+
+            # Learn associations
+            if args:
+                key = f"{name}:args"
+                self.data.setdefault("learned_associations", {})[key] = args
+
+            # Track time patterns
+            hour = datetime.now().hour
+            time_key = f"{name}:hour:{hour}"
+            self.data.setdefault("time_patterns", {})[time_key] = \
+                self.data["time_patterns"].get(time_key, 0) + 1
+
+            # Update favorites
+            if freq[name] > 8 and name not in self.data.get("favorite_commands", []):
+                self.data["favorite_commands"].append(name)
+        else:
+            # Learn from errors
+            error_key = f"{name}:{':'.join(args[:2])}"
+            self.data.setdefault("error_patterns", {})[error_key] = \
+                self.data["error_patterns"].get(error_key, 0) + 1
+
+        self.last_command = name
+        self.save()
+
+    def get_contextual_suggestions(self) -> List[str]:
+        """Get smart suggestions based on context"""
+        suggestions = []
+        hour = datetime.now().hour
+
+        # Time-based suggestions
+        time_patterns = self.data.get("time_patterns", {})
+        for key, count in sorted(time_patterns.items(), key=lambda x: x[1], reverse=True):
+            parts = key.split(":")
+            if len(parts) == 3 and int(parts[2]) == hour and count > 2:
+                cmd = parts[0]
+                if cmd not in [e.get("command") for e in self.session_history[-3:]]:
+                    suggestions.append(f"💡 You usually run '{cmd}' around this time")
+                    break
+
+        # Sequence suggestions
+        if self.last_command:
+            history = self.data.get("command_history", [])
+            following_commands = Counter()
+            for i, entry in enumerate(history[:-1]):
+                if entry["command"] == self.last_command and i + 1 < len(history):
+                    next_cmd = history[i + 1]["command"]
+                    following_commands[next_cmd] += 1
+
+            if following_commands:
+                most_common = following_commands.most_common(1)[0]
+                if most_common[1] > 2:
+                    suggestions.append(f"💡 After '{self.last_command}', you usually run '{most_common[0]}'")
+
+        return suggestions[:2]
+
+    def update_state(self, new_state: str):
+        """Update conversation state"""
+        self.conversation_state = new_state
+
+    def add_to_session(self, user: str, bot: str):
+        """Add a turn to the short-term session history"""
+        self.session_history.append({
+            "user": user,
+            "bot": bot,
+            "time": datetime.now().isoformat(),
+            "command": self.last_command
+        })
+        # Keep only the last 50 turns in session
+        self.session_history = self.session_history[-50:]
+
+    def resolve_reference(self, text: str) -> str:
+        """Resolve references like 'it', 'that', 'the same'"""
+        if any(word in text.lower() for word in ["it", "that", "this", "same"]):
+            if self.last_command:
+                text = re.sub(r'\b(it|that|this)\b', self.last_command, text, flags=re.IGNORECASE)
+        return text
+
+# ---------------------------
+# Advanced NLU Engine
+# ---------------------------
+class AdvancedNLU:
+    """Advanced Natural Language Understanding"""
+
+    @staticmethod
+    def parse(user_input: str, ctx: ConversationManager, scripts: Dict) -> Dict:
+        """Deep NLU parsing with context"""
+        # Resolve references
+        text = ctx.resolve_reference(user_input)
+
+        entities = {
+            "raw_text": user_input,
+            "resolved_text": text,
+            "normalized": text.lower().strip(),
+            "intent": None,
+            "intent_confidence": 0.0,
+            "commands": [],
+            "command_scores": {},
+            "parameters": [],
+            "temporal": None,
+            "modifiers": [],
+        }
+
+        # Extract intent
+        entities["intent"], entities["intent_confidence"] = SemanticEngine.extract_intent(text)
+
+        # Extract temporal information
+        entities["temporal"] = AdvancedNLU._extract_temporal(text)
+
+        # Extract modifiers
+        entities["modifiers"] = AdvancedNLU._extract_modifiers(text)
+
+        # Match commands using semantic understanding
+        query_words = set(re.findall(r'\b[a-z][a-z0-9_]{2,}\b', entities["normalized"]))
+
+        for cmd_name, cmd_info in scripts.items():
+            score = AdvancedNLU._score_command(
+                cmd_name, cmd_info, query_words, entities, ctx
+            )
+
+            if score > 0.3:
+                entities["command_scores"][cmd_name] = score
+                if score > 0.6:
+                    entities["commands"].append(cmd_name)
+
+        # Sort commands by score
+        entities["commands"] = sorted(
+            entities["commands"],
+            key=lambda c: entities["command_scores"].get(c, 0),
+            reverse=True
+        )
+
+        # Extract parameters intelligently
+        if entities["commands"]:
+            best_cmd = entities["commands"][0]
+            entities["parameters"] = AdvancedNLU._extract_parameters(
+                text, best_cmd, scripts.get(best_cmd, {})
+            )
+
+        return entities
+
+    @staticmethod
+    def _score_command(cmd_name: str, cmd_info: Dict, query_words: Set[str],
+                       entities: Dict, ctx: ConversationManager) -> float:
+        """Intelligent command scoring"""
+        score = 0.0
+
+        # 1. Exact name match
+        if cmd_name in entities["normalized"]:
+            score += 1.5
+
+        # 2. Semantic similarity with keywords
+        cmd_keywords = cmd_info.get("keywords", set())
+        if cmd_keywords:
+            semantic_score = SemanticEngine.find_semantic_matches(query_words, cmd_keywords)
+            score += semantic_score * 1.2
+
+        # 3. Action verb matching
+        action_verbs = cmd_info.get("action_verbs", set())
+        if action_verbs:
+            for verb in action_verbs:
+                if verb in entities["normalized"]:
+                    score += 0.4
+
+        # 4. Description similarity
+        desc = cmd_info.get("desc", "").lower()
+        if desc:
+            desc_words = set(re.findall(r'\b[a-z][a-z0-9_]{2,}\b', desc))
+            overlap = len(query_words & desc_words)
+            score += overlap * 0.15
+
+        # 5. Tags match
+        for tag in cmd_info.get("tags", []):
+            if tag.lower() in entities["normalized"]:
+                score += 0.5
+
+        # 6. Behavior matching
+        behavior = cmd_info.get("behavior", {})
+        if entities["intent"] == "query" and "show" in entities["normalized"]:
+            if behavior.get("output_format") in ["text", "table"]:
+                score += 0.3
+
+        # 7. Frequency boost
+        freq = ctx.data.get("command_frequency", {}).get(cmd_name, 0)
+        score += min(freq * 0.05, 0.5)
+
+        # 8. Recent usage boost
+        recent = [e.get("command") for e in ctx.session_history[-5:]]
+        if cmd_name in recent:
+            score += 0.3
+
+        # 9. Time pattern matching
+        hour = datetime.now().hour
+        time_key = f"{cmd_name}:hour:{hour}"
+        if ctx.data.get("time_patterns", {}).get(time_key, 0) > 2:
+            score += 0.2
+
+        # 10. Entity matching
+        entities_in_script = cmd_info.get("entities", set())
+        if entities_in_script:
+            for entity in entities_in_script:
+                if entity.lower() in entities["normalized"]:
+                    score += 0.4
+
+        return score
+
+    @staticmethod
+    def _extract_parameters(text: str, cmd_name: str, cmd_info: Dict) -> List[str]:
+        """Intelligently extract parameters"""
+        # Remove command name
+        clean_text = re.sub(r'\b' + re.escape(cmd_name) + r'\b', '', text, flags=re.IGNORECASE).strip()
+
+        try:
+            # Use shlex for proper parsing
+            params = shlex.split(clean_text)
+        except ValueError:
+            # Fallback to simple split
+            params = clean_text.split()
+
+        # Filter out common words
+        stopwords = {"the", "a", "an", "to", "for", "my", "some", "please"}
+        params = [p for p in params if p.lower() not in stopwords]
+
+        # Validate parameters
+        input_types = cmd_info.get("input_types", [])
+        if "file_path" in input_types:
+            paths = re.findall(r'(?:~)?/[^\s]+', text)
+            params.extend(paths)
+
+        if "url" in input_types:
+            urls = re.findall(r'https?://[^\s]+', text)
+            params.extend(urls)
 
         return params
 
     @staticmethod
-    def extract_music_intent(text):
-        """Detect music-specific intents"""
-        intents = {
-            "play_song": any(w in text for w in ["play", "play song", "play track"]),
-            "control": any(w in text for w in ["next", "skip", "pause", "stop", "previous", "back"]),
-            "volume": any(w in text for w in ["volume", "vol", "louder", "quieter"]),
-            "shuffle": "shuffle" in text or "random" in text,
-            "playlist": "playlist" in text,
-            "status": any(w in text for w in ["what's playing", "current song", "now playing"])
-        }
-        return intents if any(intents.values()) else None
-
-    @staticmethod
-    def extract_temporal(text):
-        """Time-based intent detection"""
-        if any(w in text for w in ["now", "immediately", "asap", "quick"]):
+    def _extract_temporal(text: str) -> Optional[str]:
+        """Extract temporal information"""
+        if any(w in text for w in ["now", "immediately", "asap"]):
             return "immediate"
-        if any(w in text for w in ["later", "schedule", "wait"]):
+        if any(w in text for w in ["later", "schedule", "soon"]):
             return "delayed"
-        if any(w in text for w in ["again", "repeat", "keep", "continuous"]):
+        if any(w in text for w in ["again", "repeat", "keep"]):
             return "recurring"
         return None
 
     @staticmethod
-    def extract_intensity(text):
-        """Urgency detection"""
-        urgent = ["urgent", "asap", "now", "quick", "fast", "immediately", "hurry"]
-        if any(w in text for w in urgent):
-            return "high"
-        return "normal"
+    def _extract_modifiers(text: str) -> List[str]:
+        """Extract modifying words"""
+        modifiers = []
+        mod_patterns = {
+            "urgency": r'\b(urgent|quick|fast|asap|now|immediately)\b',
+            "quality": r'\b(best|good|better|optimal|perfect)\b',
+            "quantity": r'\b(all|some|few|many|several)\b',
+            "certainty": r'\b(maybe|perhaps|probably|definitely)\b',
+        }
 
-    @staticmethod
-    def detect_question(text):
-        """Identify question types"""
-        if text.startswith("what"):
-            return "what"
-        if text.startswith("how"):
-            return "how"
-        if text.startswith("why"):
-            return "why"
-        if text.startswith("when"):
-            return "when"
-        if text.startswith("can"):
-            return "capability"
-        if "?" in text:
-            return "general"
-        return None
+        for mod_type, pattern in mod_patterns.items():
+            if re.search(pattern, text, re.IGNORECASE):
+                modifiers.append(mod_type)
 
+        return modifiers
+
+# ---------------------------
+# Intelligent Reasoning
 # ---------------------------
 # Intelligent Reasoning Engine
 # ---------------------------
 class ReasoningEngine:
-    """Multi-level reasoning with context awareness"""
+    """Multi-step reasoning with dependency resolution"""
 
     @staticmethod
-    def find_best_match(entities, conversation_ctx):
-        """Advanced matching with multiple strategies"""
-        candidates = []
-
-        # Direct command matches (highest priority)
-        for cmd in entities["commands"]:
-            if cmd in script_context:
-                candidates.append((cmd, 1.0, "direct"))
-
-        # Music-specific routing
-        if entities["music_intent"]:
-            if "music" in script_context:
-                score = 0.95
-                if entities["music_intent"]["control"]:
-                    score = 1.0
-                candidates.append(("music", score, "music_intent"))
-
-        # Context-based prediction
-        if not candidates and conversation_ctx.last_command:
-            # If user says "again" or "do it", repeat last command
-            if any(w in entities["raw_text"].lower() for w in ["again", "do it", "repeat", "same"]):
-                candidates.append((conversation_ctx.last_command, 0.9, "repeat"))
-
-        # Category-based matching
-        if entities["category"] and not candidates:
-            for cmd_name, cmd_info in script_context.items():
-                if entities["category"] in cmd_info["categories"]:
-                    freq = conversation_ctx.data["command_frequency"].get(cmd_name, 0)
-                    score = 0.6 + (min(freq, 20) * 0.02)
-                    candidates.append((cmd_name, score, "category"))
-
-        # Action-based semantic search
-        if not candidates:
-            candidates.extend(ReasoningEngine.semantic_search(entities, conversation_ctx))
-
-        # Sort by score
-        if candidates:
-            candidates.sort(key=lambda x: x[1], reverse=True)
-            return candidates[0][0], candidates[0][2], candidates[0][1]
-
-        return None, None, 0.0
-
-    @staticmethod
-    def semantic_search(entities, conversation_ctx):
-        """Deep semantic search with learned patterns"""
-        candidates = []
-        action = entities["action"]
-
-        for cmd_name, cmd_info in script_context.items():
-            score = 0.0
-            desc = cmd_info["desc"].lower()
-
-            # Action alignment
-            if action == "start" and any(w in desc for w in ["start", "launch", "play", "run"]):
-                score += 0.4
-            elif action == "stop" and any(w in desc for w in ["stop", "kill", "end", "disconnect"]):
-                score += 0.4
-            elif action == "show" and any(w in desc for w in ["show", "display", "info", "status"]):
-                score += 0.4
-            elif action == "connect" and any(w in desc for w in ["connect", "pair", "link"]):
-                score += 0.4
-            elif action == "sync" and any(w in desc for w in ["sync", "backup", "commit", "save"]):
-                score += 0.4
-
-            # Parameter compatibility
-            if entities["parameters"] and cmd_info["args"]:
-                score += 0.15
-
-            # Favorite bonus
-            if cmd_name in conversation_ctx.data.get("favorite_commands", []):
-                score += 0.1
-
-            # Recent usage bonus
-            recent = conversation_ctx.get_context_clues()
-            if cmd_name in recent.get("recent_commands", []):
-                score += 0.1
-
-            if score > 0.3:
-                candidates.append((cmd_name, score, "semantic"))
-
-        return candidates
-
-    @staticmethod
-    def plan_execution(entities, conversation_ctx):
+    def create_execution_plan(entities: Dict, ctx: ConversationManager, scripts: Dict) -> Optional[Dict]:
         """Create intelligent execution plan"""
-        cmd, method, confidence = ReasoningEngine.find_best_match(entities, conversation_ctx)
 
-        if not cmd:
+        if not entities["commands"]:
             return None
+
+        # Multi-step detection
+        conjunctions = r'\s+(and then|and|then|after that|followed by)\s+'
+        segments = re.split(conjunctions, entities["resolved_text"], flags=re.IGNORECASE)
+
+        # Filter out conjunction words
+        command_segments = [s.strip() for s in segments if s.strip() and
+                              not re.match(r'^(and then|and|then|after that|followed by)$', s.strip(), re.IGNORECASE)]
 
         plan = {
             "steps": [],
+            "confidence": 1.0,
             "requires_confirmation": False,
-            "estimated_risk": "low",
-            "confidence": confidence,
-            "method": method
+            "risk_level": "low",
+            "estimated_duration": 0,
         }
 
-        # Handle music commands specially
-        if cmd == "music":
-            args = ReasoningEngine.build_music_args(entities, conversation_ctx)
+        if len(command_segments) > 1:
+            # Multi-step plan
+            for segment in command_segments:
+                step_entities = AdvancedNLU.parse(segment, ctx, scripts)
+                if step_entities["commands"]:
+                    best_cmd = step_entities["commands"][0]
+                    step = ReasoningEngine._create_step(
+                        best_cmd, step_entities, scripts, ctx
+                    )
+                    plan["steps"].append(step)
+                    plan["confidence"] = min(plan["confidence"], step["confidence"])
+        elif entities["commands"]:
+            # Single command
+            best_cmd = entities["commands"][0]
+            step = ReasoningEngine._create_step(best_cmd, entities, scripts, ctx)
+            plan["steps"].append(step)
+            plan["confidence"] = step["confidence"]
         else:
-            args = entities["parameters"]
+            return None # No commands found in any segment
 
-        step = {
-            "command": cmd,
-            "args": args,
-            "background": ReasoningEngine.should_run_background(cmd),
-            "method": method,
-            "confidence": confidence
-        }
-
-        plan["steps"].append(step)
-
-        # Risk assessment
-        dangerous = ["delete", "remove", "kill", "stop", "format", "rm", "disconnect"]
-        if any(d in script_context[cmd]["desc"].lower() for d in dangerous):
-            plan["estimated_risk"] = "medium"
-            plan["requires_confirmation"] = confidence < 0.8
+        # Analyze plan
+        plan = ReasoningEngine._analyze_plan(plan, ctx)
 
         return plan
 
     @staticmethod
-    def build_music_args(entities, conversation_ctx):
-        """Build music command arguments from natural language"""
-        args = []
-        intent = entities["music_intent"]
+    def _create_step(cmd_name: str, entities: Dict, scripts: Dict, ctx: ConversationManager) -> Dict:
+        """Create a single execution step"""
+        cmd_info = scripts.get(cmd_name, {})
 
-        if intent["control"]:
-            action = entities["raw_text"].lower()
-            if "next" in action or "skip" in action:
-                args.append("next")
-            elif "prev" in action or "back" in action:
-                args.append("prev")
-            elif "pause" in action or "stop" in action:
-                args.append("pause")
-            elif "play" in action and not intent["play_song"]:
-                args.append("play")
-            elif "shuffle" in action:
-                args.append("shuffle")
+        # Get parameters with intelligent inference
+        params = entities["parameters"]
 
-        if intent["volume"] and entities["parameters"]:
-            # Extract volume number
-            for param in entities["parameters"]:
-                if param.isdigit():
-                    args.extend(["vol", param])
-                    break
+        # Check for learned associations
+        learned_key = f"{cmd_name}:args"
+        if not params and learned_key in ctx.data.get("learned_associations", {}):
+            # Use previously learned params as suggestion
+            learned_params = ctx.data["learned_associations"][learned_key]
+            # Don't auto-apply, but note them for suggestion
+            pass
 
-        if intent["play_song"] and entities["parameters"]:
-            # Get song name
-            for param in entities["parameters"]:
-                if not param.isdigit() and "/" not in param:
-                    args.append(param)
-                    break
+        # Infer background execution
+        behavior = cmd_info.get("behavior", {})
+        should_background = behavior.get("background_suitable", False) and \
+                            behavior.get("is_long_running", False)
 
-        if intent["status"]:
-            args.append("--status")
+        step = {
+            "command": cmd_name,
+            "args": params,
+            "background": should_background,
+            "confidence": entities["command_scores"].get(cmd_name, 0.5),
+            "behavior": behavior,
+            "dependencies": cmd_info.get("dependencies", []),
+        }
 
-        return args
+        return step
 
     @staticmethod
-    def should_run_background(cmd):
-        """Determine background execution"""
-        if not cmd:
-            return False
-        desc = script_context.get(cmd, {}).get("desc", "").lower()
-        bg_keywords = ["music", "server", "monitor", "watch", "daemon", "service"]
-        return any(kw in desc for kw in bg_keywords) or cmd == "music"
+    def _analyze_plan(plan: Dict, ctx: ConversationManager) -> Dict:
+        """Analyze plan for risks and requirements"""
 
-# ---------------------------
-# Smart Response Generator
-# ---------------------------
-class ResponseGenerator:
-    """Context-aware response generation"""
+        total_risk = 0
+        total_duration = 0
+
+        for step in plan["steps"]:
+            cmd_name = step["command"]
+            cmd_info = script_context.get(cmd_name, {})
+
+            # Check for side effects
+            side_effects = cmd_info.get("side_effects", [])
+            if side_effects:
+                total_risk += len(side_effects) * 20
+                plan["risk_level"] = "high" if total_risk > 50 else "medium"
+                plan["requires_confirmation"] = True
+
+            # Check past errors
+            error_key = f"{cmd_name}:{':'.join(step['args'][:2])}"
+            if ctx.data.get("error_patterns", {}).get(error_key, 0) > 2:
+                plan["requires_confirmation"] = True
+                step["warning"] = "This combination has failed before"
+
+            # Estimate duration
+            behavior = step.get("behavior", {})
+            if behavior.get("is_long_running"):
+                total_duration += 60
+            elif behavior.get("network_access"):
+                total_duration += 5
+            else:
+                total_duration += 1
+
+        plan["estimated_duration"] = total_duration
+
+        # Check dependencies between steps
+        plan["dependency_chain"] = ReasoningEngine._check_dependencies(plan["steps"])
+
+        return plan
 
     @staticmethod
-    def generate(user_input, conversation_ctx):
-        """Main response generation with conversation awareness"""
-        text = user_input.lower().strip()
+    def _check_dependencies(steps: List[Dict]) -> List[str]:
+        """Check if steps have dependency relationships"""
+        deps = []
+        for i, step in enumerate(steps):
+            for j, other_step in enumerate(steps):
+                if i != j:
+                    # Check if step depends on other_step
+                    step_deps = set(step.get("dependencies", []))
+                    other_name = other_step["command"]
+                    if other_name in step_deps:
+                        deps.append(f"{other_name} → {step['command']}")
+        return deps
 
-        # Handle confirmation
-        if conversation_ctx.pending_confirmation:
-            if text in ["yes", "y", "ok", "sure", "confirm"]:
-                plan = conversation_ctx.pending_confirmation
-                conversation_ctx.pending_confirmation = None
-                return ResponseGenerator.execute_plan(plan, conversation_ctx), "execute"
-            elif text in ["no", "n", "cancel", "nevermind"]:
-                conversation_ctx.pending_confirmation = None
+# ---------------------------
+# Response Generator with Intelligence
+# ---------------------------
+class IntelligentResponder:
+    """Generate intelligent, context-aware responses"""
+
+    @staticmethod
+    def generate(user_input: str, ctx: ConversationManager) -> Tuple[str, str]:
+        """Main response generation"""
+        text = user_input.strip()
+        normalized = text.lower()
+
+        # Handle confirmations
+        if ctx.pending_confirmation:
+            if normalized in ("yes", "y", "confirm", "ok", "sure", "do it"):
+                plan = ctx.pending_confirmation
+                ctx.pending_confirmation = None
+                ctx.update_state("executing")
+                return IntelligentResponder._execute_plan(plan, ctx), "execute"
+            elif normalized in ("no", "n", "cancel", "nevermind", "stop"):
+                ctx.pending_confirmation = None
+                ctx.update_state("idle")
                 return "❌ Cancelled.", "cancel"
 
-        # Exit commands
-        if text in ["exit", "quit", "bye", "goodbye"]:
+        # Meta commands
+        if normalized in ("help", "?", "commands"):
+            return IntelligentResponder._generate_help(), "help"
+
+        if normalized.startswith("help "):
+            cmd = normalized[5:].strip()
+            if cmd in script_context:
+                return IntelligentResponder._detailed_help(cmd), "help"
+
+        if normalized in ("exit", "quit", "bye", "goodbye"):
             return None, "exit"
 
-        # Help system
-        if text in ["help", "?", "commands"]:
-            return ResponseGenerator.generate_help(), "help"
+        if normalized in ("reset", "clear context"):
+            ctx.data = ctx._load()
+            ctx.save()
+            return "✅ Context reset.", "reset"
 
-        if text.startswith("help "):
-            cmd = text.replace("help ", "").strip()
-            if cmd in script_context:
-                return ResponseGenerator.format_detailed_help(cmd), "help"
+        # Analytics
+        if "most used" in normalized or "popular" in normalized:
+            return IntelligentResponder._show_analytics(ctx), "analytics"
 
-        # Reset context if corrupted
-        if text in ["reset", "reset context", "clear context"]:
-            conversation_ctx.data = conversation_ctx._get_defaults()
-            conversation_ctx.save()
-            return "✅ Context reset successfully! Starting fresh.", "reset"
+        if "history" in normalized or "recent" in normalized:
+            return IntelligentResponder._show_history(ctx), "history"
 
-        # Analytics and meta queries
-        if "most" in text and ("used" in text or "popular" in text or "frequent" in text):
-            return ResponseGenerator.show_analytics(conversation_ctx), "analytics"
+        if "favorites" in normalized or "favourite" in normalized:
+            return IntelligentResponder._show_favorites(ctx), "favorites"
 
-        if any(phrase in text for phrase in ["what can", "what do you", "capabilities", "what are you"]):
-            return ResponseGenerator.explain_capabilities(), "info"
+        if "suggest" in normalized or "what should i" in normalized:
+            return IntelligentResponder._show_suggestions(ctx), "suggestions"
 
-        if "history" in text or "recent" in text or "last" in text:
-            return ResponseGenerator.show_history(conversation_ctx), "history"
-
-        if "favorites" in text or "favourite" in text:
-            return ResponseGenerator.show_favorites(conversation_ctx), "favorites"
-
-        # Parse user intent
-        entities = NLUEngine.parse(user_input, conversation_ctx)
-        conversation_ctx.last_action = entities["action"]
-
-        # Update topic
-        if entities["category"]:
-            conversation_ctx.last_topic = entities["category"]
+        # Parse with advanced NLU
+        ctx.update_state("parsing")
+        entities = AdvancedNLU.parse(user_input, ctx, script_context)
 
         # Handle questions
-        if entities["question_type"]:
-            response = ResponseGenerator.handle_question(entities, conversation_ctx)
+        if any(normalized.startswith(q) for q in ["what", "how", "why", "when", "who"]):
+            response = IntelligentResponder._handle_question(entities, ctx)
             if response:
                 return response, "question"
 
-        # Execute command
-        plan = ReasoningEngine.plan_execution(entities, conversation_ctx)
+        # Create execution plan
+        ctx.update_state("reasoning")
+        plan = ReasoningEngine.create_execution_plan(entities, ctx, script_context)
 
         if not plan:
-            return ResponseGenerator.no_match_response(entities, conversation_ctx), "no_match"
+            return IntelligentResponder._no_match_response(entities, ctx), "no_match"
 
-        # Low confidence - ask for confirmation
-        if plan["confidence"] < 0.7:
-            cmd = plan["steps"][0]["command"]
-            return f"🤔 Did you mean '{cmd}'? (yes/no)", "clarify"
+        # Show suggestions if available
+        suggestions = ctx.get_contextual_suggestions()
+        suggestion_text = "\n" + "\n".join(suggestions) if suggestions else ""
 
-        # Requires confirmation
+        # Check confidence
+        if plan["confidence"] < 0.55:
+            ctx.pending_confirmation = plan
+            cmd_list = ", ".join(f"'{s['command']}'" for s in plan["steps"])
+            return f"🤔 I think you want: {cmd_list}\nConfidence: {plan['confidence']:.0%}\nIs this correct? (yes/no){suggestion_text}", "clarify"
+
+        # Check if confirmation needed
         if plan["requires_confirmation"]:
-            cmd = plan["steps"][0]["command"]
-            conversation_ctx.pending_confirmation = plan
-            return f"⚠️  '{cmd}' will modify system state. Confirm? (yes/no)", "confirm"
+            ctx.pending_confirmation = plan
+            risk_msg = f" [Risk: {plan['risk_level']}]" if plan["risk_level"] != "low" else ""
+            duration_msg = f" [~{plan['estimated_duration']}s]" if plan["estimated_duration"] > 10 else ""
+            cmd_list = " → ".join(f"'{s['command']}'" for s in plan["steps"])
 
-        return ResponseGenerator.execute_plan(plan, conversation_ctx), "execute"
+            warnings = []
+            for step in plan["steps"]:
+                if "warning" in step:
+                    warnings.append(f"⚠️  {step['command']}: {step['warning']}")
+
+            warning_text = "\n" + "\n".join(warnings) if warnings else ""
+
+            return f"⚠️  Plan: {cmd_list}{risk_msg}{duration_msg}\n{warning_text}\nConfirm? (yes/no){suggestion_text}", "confirm"
+
+        # Execute directly
+        ctx.update_state("executing")
+        result = IntelligentResponder._execute_plan(plan, ctx)
+        ctx.update_state("idle")
+
+        return result + suggestion_text, "execute"
 
     @staticmethod
-    def execute_plan(plan, conversation_ctx):
-        """Execute with rich feedback"""
+    def _execute_plan(plan: Dict, ctx: ConversationManager) -> str:
+        """Execute plan with rich feedback"""
         results = []
 
-        for step in plan["steps"]:
+        for i, step in enumerate(plan["steps"]):
             cmd = step["command"]
             args = step["args"]
 
-            # Show what we're doing
-            if step["confidence"] < 0.9:
-                confidence = "✓" if step["confidence"] > 0.8 else "~"
-                results.append(f"{confidence} Running: {cmd} {' '.join(args)}")
+            # Show progress for multi-step
+            if len(plan["steps"]) > 1:
+                results.append(f"[{i+1}/{len(plan['steps'])}] Running {cmd}...")
 
             # Execute
-            success, output = execute_command(cmd, args, step["background"])
-            conversation_ctx.record_command(cmd, args, success)
+            success, output = IntelligentResponder._execute_command(
+                cmd, args, step.get("background", False)
+            )
+
+            ctx.record_command(cmd, args, success)
 
             # Format output
             if success:
-                if output and output != "Success":
+                if output and output != "✓ Success":
                     results.append(output)
-                elif step["background"]:
+                elif step.get("background"):
                     results.append(f"✅ {cmd} started in background")
                 else:
                     results.append(f"✅ {cmd} completed")
             else:
                 results.append(f"❌ {cmd} failed: {output}")
+                # Stop on failure for multi-step
+                if len(plan["steps"]) > 1:
+                    results.append("⚠️  Stopping execution due to failure")
+                    break
 
         return "\n".join(results)
 
     @staticmethod
-    def handle_question(entities, conversation_ctx):
+    def _execute_command(cmd_name: str, args: List[str], background: bool) -> Tuple[bool, str]:
+        """Execute with enhanced error handling"""
+        cmd_info = script_context.get(cmd_name)
+        if not cmd_info:
+            return False, "Command not found"
+
+        path = cmd_info.get("path")
+        if not path or not Path(path).exists():
+            return False, f"Executable not found. Run 'jyupdate' to install."
+
+        full_cmd = [str(path)] + args
+
+        try:
+            if background:
+                subprocess.Popen(
+                    full_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True
+                )
+                return True, "Started in background"
+            else:
+                proc = subprocess.run(
+                    full_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=EXEC_TIMEOUT
+                )
+
+                if proc.returncode == 0:
+                    output = proc.stdout.strip()
+                    return True, output if output else "✓ Success"
+                else:
+                    error = proc.stderr.strip()
+                    return False, error if error else f"Exit code {proc.returncode}"
+
+        except subprocess.TimeoutExpired:
+            return False, f"⏱️  Timed out ({EXEC_TIMEOUT}s)"
+        except Exception as e:
+            return False, f"Error: {e}"
+
+    @staticmethod
+    def _handle_question(entities: Dict, ctx: ConversationManager) -> Optional[str]:
         """Answer questions intelligently"""
-        text = entities["raw_text"].lower()
+        text = entities["normalized"]
 
-        # "What's playing" / music status
-        if any(phrase in text for phrase in ["what's playing", "current song", "now playing"]):
+        # Status queries
+        if any(phrase in text for phrase in ["what's playing", "now playing", "current song"]):
             if "music" in script_context:
-                return ResponseGenerator.execute_plan({
-                    "steps": [{"command": "music", "args": ["--status"], "background": False, "confidence": 1.0}]
-                }, conversation_ctx)
+                plan = {"steps": [{"command": "music", "args": ["--status"], "background": False}]}
+                return IntelligentResponder._execute_plan(plan, ctx)
 
-        # Command-specific questions
+        # Command help
         if entities["commands"]:
             cmd = entities["commands"][0]
-            if "how" in text:
-                return ResponseGenerator.format_detailed_help(cmd)
-            if "what" in text:
-                info = script_context[cmd]
-                return f"💡 {cmd}: {info['desc']}"
+            if text.startswith("how"):
+                return IntelligentResponder._detailed_help(cmd)
+            if text.startswith("what"):
+                info = script_context.get(cmd, {})
+                return f"💡 {cmd}: {info.get('desc', 'No description')}"
+
+        # General capabilities
+        if "what can you do" in text or "capabilities" in text:
+            return IntelligentResponder._explain_capabilities()
 
         return None
 
     @staticmethod
-    def no_match_response(entities, conversation_ctx):
-        """Smart fallback with helpful suggestions"""
+    def _no_match_response(entities: Dict, ctx: ConversationManager) -> str:
+        """Intelligent fallback"""
         suggestions = []
 
-        # Category-based suggestions
-        if entities["category"]:
-            cmds = [name for name, info in script_context.items()
-                   if entities["category"] in info["categories"]]
-            if cmds:
-                suggestions.append(f"💡 {entities['category'].title()} commands: {', '.join(cmds[:3])}")
+        # Semantic suggestions based on query
+        if entities["command_scores"]:
+            top_matches = sorted(
+                entities["command_scores"].items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:3]
 
-        # Action-based suggestions
-        action = entities["action"]
-        if action != "query":
-            action_cmds = []
-            for name, info in script_context.items():
-                desc = info["desc"].lower()
-                if action in desc or any(v in desc for v in KnowledgeBase.ACTION_VERBS.get(action, [])):
-                    action_cmds.append(name)
-            if action_cmds:
-                suggestions.append(f"🔍 For '{action}': {', '.join(action_cmds[:3])}")
+            if top_matches[0][1] > 0.25:  # Some relevance
+                suggestions.append(
+                    f"🔍 Did you mean: {', '.join(cmd for cmd, _ in top_matches)}?"
+                )
 
-        # Favorites suggestion
-        if conversation_ctx.data.get("favorite_commands"):
-            faves = conversation_ctx.data["favorite_commands"][:3]
+        # Show favorites
+        if ctx.data.get("favorite_commands"):
+            faves = ctx.data["favorite_commands"][:3]
             suggestions.append(f"⭐ Your favorites: {', '.join(faves)}")
 
-        if suggestions:
-            return "\n".join(suggestions) + f"\n\n💬 Try: 'help' or describe what you want to do"
+        # Contextual suggestions
+        contextual = ctx.get_contextual_suggestions()
+        suggestions.extend(contextual)
 
-        return "❓ I'm not sure what you want.\n💡 Try:\n  • 'help' - see all commands\n  • 'what can you do?' - learn more\n  • Describe your task in plain English"
+        if not suggestions:
+            suggestions.append("💬 Try: 'help' to see all commands or describe what you want")
+
+        return "\n".join(suggestions)
 
     @staticmethod
-    def generate_help():
-        """Beautiful categorized help"""
+    def _generate_help() -> str:
+        """Intelligent help generation"""
+        lines = [f"{Fore.CYAN}╔═══════════════════════════════════╗{Style.RESET_ALL}"]
+        lines.append(f"{Fore.CYAN}║     🤖 Available Commands      ║{Style.RESET_ALL}")
+        lines.append(f"{Fore.CYAN}╚═══════════════════════════════════╝{Style.RESET_ALL}\n")
+
+        # Group by category
         categories = defaultdict(list)
         for name, info in script_context.items():
-            for cat in info["categories"]:
-                categories[cat].append((name, info["desc"]))
+            cats = info.get("categories", ["general"])
+            for cat in cats:
+                categories[cat].append((name, info.get("desc", "")))
 
-        output = [f"{Fore.CYAN}╔═══════════════════════════════════════╗{Style.RESET_ALL}"]
-        output.append(f"{Fore.CYAN}║       📚 Available Commands           ║{Style.RESET_ALL}")
-        output.append(f"{Fore.CYAN}╚═══════════════════════════════════════╝{Style.RESET_ALL}\n")
+        for cat in sorted(categories.keys()):
+            lines.append(f"{Fore.YELLOW}▸ {cat.upper()}{Style.RESET_ALL}")
+            for name, desc in sorted(categories[cat]):
+                short_desc = desc[:50] + "..." if len(desc) > 50 else desc
+                lines.append(f"  • {name:12} {short_desc}")
+            lines.append("")
 
-        for category, cmds in sorted(categories.items()):
-            output.append(f"{Fore.YELLOW}▸ {category.upper()}{Style.RESET_ALL}")
-            for cmd, desc in sorted(cmds):
-                short_desc = desc[:55] + "..." if len(desc) > 55 else desc
-                output.append(f"  {Fore.GREEN}•{Style.RESET_ALL} {cmd:12} - {short_desc}")
-            output.append("")
+        lines.append(f"{Fore.CYAN}💡 Natural language examples:{Style.RESET_ALL}")
+        lines.append("  • 'play bohemian rhapsody'")
+        lines.append("  • 'connect airpods'")
+        lines.append("  • 'show system info'")
+        lines.append("  • 'commit notes and then show history'")
 
-        output.append(f"{Fore.CYAN}💬 Natural Language Examples:{Style.RESET_ALL}")
-        output.append("  • 'play some music'")
-        output.append("  • 'connect my airpods'")
-        output.append("  • 'show system info'")
-        output.append("  • 'commit my notes'")
-        output.append("  • 'next song' or 'skip'")
-        output.append(f"\n{Fore.CYAN}📖 For detailed help:{Style.RESET_ALL} 'help <command>'")
-
-        return "\n".join(output)
+        return "\n".join(lines)
 
     @staticmethod
-    def format_detailed_help(cmd):
-        """Comprehensive command help"""
-        info = script_context[cmd]
-        output = [f"\n{Fore.CYAN}╔{'═' * 50}╗{Style.RESET_ALL}"]
-        output.append(f"{Fore.CYAN}║  {cmd.upper():^48}║{Style.RESET_ALL}")
-        output.append(f"{Fore.CYAN}╚{'═' * 50}╝{Style.RESET_ALL}\n")
-        output.append(f"📝 {info['desc']}\n")
-
-        if info["args"]:
-            output.append(f"{Fore.YELLOW}Arguments:{Style.RESET_ALL}")
-            for arg in info["args"]:
-                output.append(f"  • {arg}")
-            output.append("")
+    def _detailed_help(cmd: str) -> str:
+        """Detailed command help"""
+        info = script_context.get(cmd, {})
+        lines = [f"\n{Fore.CYAN}═══ {cmd.upper()} ═══{Style.RESET_ALL}"]
+        lines.append(f"📝 {info.get('desc', 'No description')}\n")
 
         if info.get("flags"):
-            output.append(f"{Fore.YELLOW}Flags:{Style.RESET_ALL}")
+            lines.append(f"{Fore.YELLOW}Flags:{Style.RESET_ALL}")
             for flag in info["flags"]:
-                output.append(f"  • {flag}")
-            output.append("")
-
-        if info.get("subcommands"):
-            output.append(f"{Fore.YELLOW}Subcommands:{Style.RESET_ALL}")
-            for sub, desc in info["subcommands"].items():
-                output.append(f"  • {sub}")
-            output.append("")
-
-        if info.get("tags"):
-            output.append(f"{Fore.YELLOW}Tags:{Style.RESET_ALL} {', '.join(info['tags'])}\n")
+                lines.append(f"  • {flag}")
+            lines.append("")
 
         if info.get("examples"):
-            output.append(f"{Fore.YELLOW}Examples:{Style.RESET_ALL}")
+            lines.append(f"{Fore.YELLOW}Examples:{Style.RESET_ALL}")
             for ex in info["examples"]:
-                output.append(f"  $ {ex}")
-            output.append("")
+                lines.append(f"  $ {ex}")
+            lines.append("")
 
-        # Add natural language examples
-        output.append(f"{Fore.CYAN}💬 You can also say:{Style.RESET_ALL}")
-        if cmd == "music":
-            output.append("  • 'play bohemian rhapsody'")
-            output.append("  • 'next song' or 'skip'")
-            output.append("  • 'volume 80'")
-            output.append("  • 'shuffle'")
-        elif cmd == "airpods":
-            output.append("  • 'connect airpods'")
-            output.append("  • 'connect my headphones'")
-        elif cmd == "sysinfo":
-            output.append("  • 'show system info'")
-            output.append("  • 'check my computer stats'")
-        elif cmd == "notes":
-            output.append("  • 'commit my notes'")
-            output.append("  • 'sync notes'")
-        else:
-            output.append(f"  • 'run {cmd}'")
+        behavior = info.get("behavior", {})
+        if behavior:
+            lines.append(f"{Fore.YELLOW}Behavior:{Style.RESET_ALL}")
+            if behavior.get("is_interactive"):
+                lines.append("  • Interactive (requires user input)")
+            if behavior.get("network_access"):
+                lines.append("  • Requires network access")
+            if behavior.get("modifies_files"):
+                lines.append("  • Modifies files")
+            lines.append("")
 
-        return "\n".join(output)
+        return "\n".join(lines)
 
     @staticmethod
-    def show_analytics(conversation_ctx):
-        """Detailed usage analytics"""
-        freq = conversation_ctx.data["command_frequency"]
+    def _show_analytics(ctx: ConversationManager) -> str:
+        """Show analytics"""
+        freq = ctx.data.get("command_frequency", {})
         if not freq:
             return "📊 No commands used yet."
 
         total = sum(freq.values())
         top = sorted(freq.items(), key=lambda x: x[1], reverse=True)[:7]
 
-        output = [f"{Fore.CYAN}╔═══════════════════════════════════════╗{Style.RESET_ALL}"]
-        output.append(f"{Fore.CYAN}║      📊 Command Analytics             ║{Style.RESET_ALL}")
-        output.append(f"{Fore.CYAN}╚═══════════════════════════════════════╝{Style.RESET_ALL}\n")
-        output.append(f"Total commands executed: {Fore.GREEN}{total}{Style.RESET_ALL}\n")
+        lines = [f"{Fore.CYAN}📊 Command Analytics{Style.RESET_ALL}"]
+        lines.append(f"Total executions: {total}\n")
 
         for cmd, count in top:
             pct = (count / total) * 100
-            bar_length = int(pct / 3)
-            bar = f"{Fore.GREEN}{'█' * bar_length}{Style.RESET_ALL}"
-            output.append(f"  {cmd:12} {bar} {count:3} ({pct:5.1f}%)")
+            bar = "█" * int(pct / 5)
+            lines.append(f"  {cmd:12} {bar} {count} ({pct:.1f}%)")
 
-        return "\n".join(output)
+        return "\n".join(lines)
 
     @staticmethod
-    def show_history(conversation_ctx):
-        """Recent command history"""
-        history = conversation_ctx.data["command_history"][-15:]
+    def _show_history(ctx: ConversationManager) -> str:
+        """Show history"""
+        history = ctx.data.get("command_history", [])[-15:]
         if not history:
-            return "📜 No command history."
+            return "📜 No history yet."
 
-        output = [f"{Fore.CYAN}📜 Recent Commands:{Style.RESET_ALL}\n"]
+        lines = [f"{Fore.CYAN}📜 Recent Commands{Style.RESET_ALL}\n"]
         for entry in reversed(history):
-            time = datetime.fromisoformat(entry["timestamp"]).strftime("%H:%M")
-            status = f"{Fore.GREEN}✓{Style.RESET_ALL}" if entry["success"] else f"{Fore.RED}✗{Style.RESET_ALL}"
-            args_str = " ".join(entry["args"]) if entry["args"] else ""
-            cmd_str = f"{entry['command']} {args_str}".strip()
-            output.append(f"  {time} {status} {cmd_str}")
+            timestamp = datetime.fromisoformat(entry["timestamp"]).strftime("%H:%M")
+            status = "✓" if entry["success"] else "✗"
+            args_str = " ".join(entry.get("args", []))
+            lines.append(f"  {timestamp} {status} {entry['command']} {args_str}")
 
-        return "\n".join(output)
+        return "\n".join(lines)
 
     @staticmethod
-    def show_favorites(conversation_ctx):
-        """Show favorite commands"""
-        faves = conversation_ctx.data.get("favorite_commands", [])
+    def _show_favorites(ctx: ConversationManager) -> str:
+        """Show favorites"""
+        faves = ctx.data.get("favorite_commands", [])
         if not faves:
-            return "⭐ No favorites yet. Keep using commands to build your favorites list!"
+            return "⭐ No favorites yet."
 
-        output = [f"{Fore.CYAN}⭐ Your Favorite Commands:{Style.RESET_ALL}\n"]
+        lines = [f"{Fore.CYAN}⭐ Your Favorites{Style.RESET_ALL}\n"]
         for cmd in faves:
+            freq = ctx.data["command_frequency"].get(cmd, 0)
             info = script_context.get(cmd, {})
-            desc = info.get("desc", "No description")
-            count = conversation_ctx.data["command_frequency"].get(cmd, 0)
-            output.append(f"  • {Fore.YELLOW}{cmd}{Style.RESET_ALL} ({count} uses)")
-            output.append(f"    {desc}")
+            lines.append(f"  • {cmd} ({freq} uses)")
+            lines.append(f"    {info.get('desc', '')}")
 
-        return "\n".join(output)
+        return "\n".join(lines)
 
     @staticmethod
-    def explain_capabilities():
-        """Explain what the bot can do"""
-        return f"""{Fore.CYAN}╔═══════════════════════════════════════╗{Style.RESET_ALL}
-{Fore.CYAN}║    🤖 Intelligent Command Assistant  ║{Style.RESET_ALL}
-{Fore.CYAN}╚═══════════════════════════════════════╝{Style.RESET_ALL}
+    def _show_suggestions(ctx: ConversationManager) -> str:
+        """Show proactive suggestions"""
+        suggestions = ctx.get_contextual_suggestions()
+
+        if not suggestions:
+            return "💡 No suggestions right now. Keep using commands and I'll learn your patterns!"
+
+        return "\n".join(suggestions)
+
+    @staticmethod
+    def _explain_capabilities() -> str:
+        """Explain capabilities"""
+        return f"""{Fore.CYAN}🤖 Intelligent Command Assistant{Style.RESET_ALL}
 
 {Fore.GREEN}✅ Natural Language Understanding{Style.RESET_ALL}
-   • "play bohemian rhapsody" → Plays song on Spotify
-   • "next song" or just "skip" → Controls playback
-   • "connect airpods" → Pairs Bluetooth devices
-   • "show system info" → Displays hardware stats
+  • Semantic matching with context awareness
+  • Multi-step command chains
+  • Coreference resolution ("do it again")
 
-{Fore.GREEN}✅ Smart Context Awareness{Style.RESET_ALL}
-   • Remembers your last commands
-   • "do it again" → Repeats last action
-   • Learns your patterns and preferences
-   • Suggests based on usage history
+{Fore.GREEN}✅ Behavioral Learning{Style.RESET_ALL}
+  • Learns your usage patterns
+  • Time-based suggestions
+  • Error pattern avoidance
+  • Favorite command tracking
 
-{Fore.GREEN}✅ Multi-Script Integration{Style.RESET_ALL}
-   • {len(script_context)} commands loaded from ~/Scripts
-   • Music control (Spotify CLI)
-   • Bluetooth device management
-   • System monitoring and SSH shortcuts
-   • Note syncing and utilities
+{Fore.GREEN}✅ Intelligent Execution{Style.RESET_ALL}
+  • Risk assessment and confirmation
+  • Dependency resolution
+  • Background process management
+  • Parameter inference
 
-{Fore.GREEN}✅ Intelligent Features{Style.RESET_ALL}
-   • Fuzzy matching & synonym understanding
-   • Category-based command discovery
-   • Safety confirmations for risky operations
-   • Background process management
-   • Usage analytics and favorites
-
-{Fore.CYAN}💡 Try saying:{Style.RESET_ALL}
-   • "play some music" or "skip"
-   • "connect my headphones"
-   • "what are my most used commands?"
-   • "show me my favorites"
-   • "commit notes" or "sync notes"
-
-Type 'help' to see all available commands!"""
+{Fore.GREEN}✅ {len(script_context)} Commands Loaded{Style.RESET_ALL}
+Type 'help' to see all commands!"""
 
 # ---------------------------
-# Command Execution
+# Script Context Builder
 # ---------------------------
-def execute_command(cmd_name, args, background=False):
-    """Execute with enhanced error handling"""
-    cmd_info = script_context.get(cmd_name)
-    if not cmd_info or not cmd_info["path"].exists():
-        return False, f"Command '{JY_PREFIX}{cmd_name}' not found. Run 'jyupdate' to install."
+def build_script_context() -> Dict[str, Dict]:
+    """Build enhanced script context"""
+    context = {}
 
-    cmd_args = [str(cmd_info["path"])] + (args or [])
+    if not SCRIPTS_DIR.exists():
+        SCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    try:
-        if background:
-            subprocess.Popen(
-                cmd_args,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True
-            )
-            return True, "Started in background"
-        else:
-            result = subprocess.run(
-                cmd_args,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            if result.returncode == 0:
-                output = result.stdout.strip()
-                return True, output if output else "✓ Success"
-            else:
-                error = result.stderr.strip()
-                return False, error if error else "Command failed"
-    except subprocess.TimeoutExpired:
-        return False, "⏱️  Command timed out (30s limit)"
-    except FileNotFoundError:
-        return False, f"Command not found. Try 'jyupdate' to install."
-    except Exception as e:
-        return False, f"Error: {str(e)}"
+    for script_file in sorted(SCRIPTS_DIR.glob("*")):
+        if script_file.name.startswith("."):
+            continue
+
+        if script_file.is_file() and script_file.suffix in [".py", ".sh", ""]:
+            try:
+                info = ScriptAnalyzer.analyze_script(script_file)
+
+                # Resolve executable path
+                candidates = [
+                    BIN_DIR / (JY_PREFIX + info["name"]),
+                    script_file,
+                ]
+
+                # --- START: NEW PERMISSION LOGIC ---
+                resolved_path = None
+                for candidate in candidates:
+                    if candidate.exists() and candidate.is_file():
+                        # Check if it's a system path (owned by root)
+                        if candidate.parent == BIN_DIR:
+                            if os.access(candidate, os.X_OK):
+                                # It's in /usr/local/bin and already executable. Use it.
+                                resolved_path = candidate
+                                break
+                            else:
+                                # It's in /usr/local/bin but NOT executable.
+                                # This is a broken symlink. Skip to the next candidate.
+                                continue
+                        else:
+                            # It's a user script in ~/Scripts.
+                            # We own it, so we CAN and SHOULD chmod it.
+                            try:
+                                candidate.chmod(candidate.stat().st_mode | 0o111)
+                                resolved_path = candidate
+                                break
+                            except Exception as e:
+                                print(f"{Fore.YELLOW}⚠️  Could not chmod {candidate.name}: {e}{Style.RESET_ALL}")
+                                # Failed, but it's still the best path we have
+                                resolved_path = candidate
+                                break
+
+                info["path"] = resolved_path or script_file # Fallback to script_file
+                # --- END: NEW PERMISSION LOGIC ---
+
+                # Categorize
+                info["categories"] = categorize_script(info)
+
+                context[info["name"]] = info
+            except Exception as e:
+                print(f"{Fore.YELLOW}⚠️  Error loading {script_file.name}: {e}{Style.RESET_ALL}")
+
+    return context
+
+def categorize_script(info: Dict) -> List[str]:
+    """Categorize script"""
+    text = (info.get("desc", "") + " " + " ".join(info.get("tags", []))).lower()
+    keywords = info.get("keywords", set())
+
+    categories = set()
+
+    # Check against semantic clusters
+    for cluster_name, cluster_words in SemanticEngine.SEMANTIC_CLUSTERS.items():
+        if any(word in text or word in keywords for word in cluster_words):
+            # Map cluster to category
+            category_mapping = {
+                "music": "media", "control": "media", "volume": "media", "playlist": "media",
+                "bluetooth": "bluetooth", "airpods": "bluetooth", "connect": "network",
+                "system": "system", "info": "system", "hardware": "system",
+                "notes": "file_ops", "git": "file_ops", "save": "file_ops",
+                "ssh": "network",
+            }
+            if cluster_name in category_mapping:
+                categories.add(category_mapping[cluster_name])
+
+    return sorted(categories) if categories else ["general"]
 
 # ---------------------------
-# Main Loop
+# Main
 # ---------------------------
+script_context = build_script_context()
+context = ConversationManager()
+
 def main():
     """Main conversation loop"""
-    # Welcome message
     print(f"\n{Fore.CYAN}╔═══════════════════════════════════════╗{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}║   🤖 Intelligent jy Assistant        ║{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}║   {len(script_context)} commands · AI-powered         ║{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}╚═══════════════════════════════════════╝{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}║    🤖 Intelligent jy Assistant      ║{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}║    {len(script_context)} commands · Maximum AI       ║{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}╚═══════════════════════════════════════╝{Style.RESET_ALL}\n")
 
-    # Show quick stats
-    if context.data["command_frequency"]:
-        total_cmds = sum(context.data["command_frequency"].values())
-        top_cmd = max(context.data["command_frequency"].items(), key=lambda x: x[1])
-        print(f"{Fore.GREEN}📊 Session stats: {total_cmds} commands run · Top: {top_cmd[0]} ({top_cmd[1]}x){Style.RESET_ALL}")
+    # Show initial suggestions
+    suggestions = context.get_contextual_suggestions()
+    if suggestions:
+        print(f"{Fore.YELLOW}💡 Suggestions:{Style.RESET_ALL}")
+        for suggestion in suggestions:
+            print(f"  {suggestion}")
+        print()
 
-    print(f"\n{Fore.CYAN}💡 Just tell me what you want to do!{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}   Examples: 'play music', 'skip', 'connect airpods', 'system info'{Style.RESET_ALL}\n")
+    print("Type 'help' for commands, 'suggest' for ideas, 'exit' to quit.\n")
 
-    while True:
-        try:
-            user_input = input(f"{Fore.GREEN}You:{Style.RESET_ALL} ").strip()
+    try:
+        while True:
+            try:
+                user_input = input(f"{Fore.GREEN}You:{Style.RESET_ALL} ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\n👋 Goodbye!")
+                break
 
             if not user_input:
                 continue
 
-            # Generate response
-            response, response_type = ResponseGenerator.generate(user_input, context)
+            response, response_type = IntelligentResponder.generate(user_input, context)
 
             if response_type == "exit":
-                total = sum(context.data["command_frequency"].values())
+                total = sum(context.data.get("command_frequency", {}).values())
                 print(f"\n{Fore.CYAN}👋 Goodbye!{Style.RESET_ALL}")
-                print(f"{Fore.GREEN}📊 Session summary: {total} commands executed{Style.RESET_ALL}")
-                if context.data.get("favorite_commands"):
-                    print(f"{Fore.YELLOW}⭐ Favorites: {', '.join(context.data['favorite_commands'][:3])}{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}📊 Session: {total} commands executed{Style.RESET_ALL}")
                 break
 
-            # Display response
-            print(f"{Fore.MAGENTA}Bot:{Style.RESET_ALL} {response}\n")
+            if response:
+                print(f"{Fore.MAGENTA}Bot:{Style.RESET_ALL} {response}\n")
 
-            # Update session
-            context.add_to_session(user_input, response)
+            context.add_to_session(user_input, response or "")
 
-        except KeyboardInterrupt:
-            print(f"\n{Fore.YELLOW}⚠️  Interrupted. Type 'exit' to quit.{Style.RESET_ALL}")
-            continue
-        except Exception as e:
-            print(f"{Fore.RED}❌ Error: {e}{Style.RESET_ALL}")
-            import traceback
-            traceback.print_exc()
-
-if __name__ == "__main__":
-    try:
-        main()
     except Exception as e:
         print(f"{Fore.RED}Fatal error: {e}{Style.RESET_ALL}")
         import traceback
         traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
