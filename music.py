@@ -44,6 +44,7 @@ Examples:
   %(prog)s shuffle                  Toggle shuffle
   %(prog)s -p "workout mix"         Play playlist
   %(prog)s -d "Kitchen"             Select device
+  %(prog)s --playlists              Browse and select playlist
     """
 )
 
@@ -57,6 +58,7 @@ parser.add_argument("-s", "--song", type=str, help="Search for a specific song")
 parser.add_argument("-v", "--volume", type=int, help="Volume 0-100")
 parser.add_argument("--shuffle", action="store_true", help="Enable shuffle")
 parser.add_argument("--status", action="store_true", help="Show current status")
+parser.add_argument("--playlists", action="store_true", help="Show and select from playlists")
 parser.add_argument("-i", "--interactive", action="store_true", help="Force interactive mode")
 
 args = parser.parse_args()
@@ -119,7 +121,7 @@ if os.path.exists(CACHE_FILE):
 # -------------------------
 cli_mode = any([
     args.device, args.playlist, search_query, args.volume is not None,
-    args.shuffle, quick_action, args.status
+    args.shuffle, quick_action, args.status, args.playlists
 ]) and not args.interactive
 
 # -------------------------
