@@ -1,4 +1,4 @@
-# Scripts
+# JYScripts
 
 A curated collection of shell and Python scripts used for custom CLI commands on Linux.
 
