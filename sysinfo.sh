@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# DESC: Display detailed system info (CPU, RAM, Disk, GPU, Network, Uptime)
+# DESC: Display detailed system info (CPU, RAM, Disk, GPU, Network, Uptime, Battery)
 
 set -euo pipefail
 
 # Colors
 GREEN="\033[1;32m"
 YELLOW="\033[1;33m"
+RED="\033[1;31m"
 CYAN="\033[1;36m"
 RESET="\033[0m"
 
@@ -37,6 +38,37 @@ if command -v nvidia-smi >/dev/null 2>&1; then
     GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader)
     GPU_MEM=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader)
     echo -e "${GREEN}GPU:${RESET} $GPU_NAME ($GPU_MEM MB used)"
+fi
+
+# Battery Info via upower
+if command -v upower >/dev/null 2>&1; then
+    BATTERY=$(upower -e | grep 'BAT' || true)
+    if [ -n "$BATTERY" ]; then
+        BAT_INFO=$(upower -i "$BATTERY")
+        PERCENT=$(echo "$BAT_INFO" | awk '/percentage:/ {print $2}' | tr -d '%')
+        STATUS=$(echo "$BAT_INFO" | awk '/state:/ {print $2}')
+        TIME=$(echo "$BAT_INFO" | awk '/time to full:/ {print $4 " " $5} /time to empty:/ {print $4 " " $5}')
+        POWER=$(echo "$BAT_INFO" | awk '/energy-rate:/ {print $2 " W"}')
+        
+        # Progress bar
+        BAR_LENGTH=20
+        FILLED=$(( PERCENT * BAR_LENGTH / 100 ))
+        EMPTY=$(( BAR_LENGTH - FILLED ))
+        if [ "$PERCENT" -ge 50 ]; then
+            BAR_COLOR=$GREEN
+        elif [ "$PERCENT" -ge 20 ]; then
+            BAR_COLOR=$YELLOW
+        else
+            BAR_COLOR=$RED
+        fi
+        PROGRESS_BAR="${BAR_COLOR}$(printf '█%.0s' $(seq 1 $FILLED))$(printf '░%.0s' $(seq 1 $EMPTY))${RESET}"
+        
+        echo -e "${GREEN}Battery:${RESET} $PERCENT% ($STATUS, $POWER, $TIME) $PROGRESS_BAR"
+    else
+        echo -e "${GREEN}Battery:${RESET} No battery found"
+    fi
+else
+    echo -e "${YELLOW}Battery:${RESET} upower not installed, cannot detect battery"
 fi
 
 # Network Info
