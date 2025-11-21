@@ -102,23 +102,11 @@ def main():
         show_help()
         return
 
-    # Handle percentage like "50%"
-    if arg.endswith("%"):
-        try:
-            percent = int(arg[:-1])
-            if percent < 0 or percent > 100:
-                print("Percentage must be between 0% and 100%")
-                return
-            value = max_brightness * percent // 100
-        except ValueError:
-            print("Invalid percentage format. Use e.g. 50%")
-            return
-    else:
-        try:
-            value = int(arg)
-        except ValueError:
-            print("Invalid brightness value. Provide an integer or percentage (e.g. 50%).")
-            return
+    percent = int(arg[0])
+    if percent < 0 or percent > 100:
+        print("Percentage must be between 0% and 100%")
+        return
+    value = max_brightness * percent // 100
 
     set_brightness(backlight, value)
 
