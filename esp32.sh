@@ -1,30 +1,73 @@
 #!/usr/bin/env bash
-# DESC: Compile and upload an ESP32 sketch to /dev/ttyUSB0
-# USAGE: jyesp32 <path_to_sketch_folder>
+# DESC: Compile and upload an ESP32 sketch with configurable Port and Board
+# USAGE: jyesp32 [-p PORT] [-b BOARD] <path_to_sketch_folder>
 
 set -euo pipefail
 
-# Configuration
-# ESP32s usually appear as ttyUSB* (Arduino Uno is usually ttyACM*)
-PORT="/dev/ttyUSB0"
-# This is the standard FQBN for a generic ESP32 Dev Module
-BOARD="esp32:esp32:esp32"
+# --- Default Configuration ---
+# Default to the most common port if none is specified
+DEFAULT_PORT="/dev/ttyUSB0"
+# Default to Generic ESP32 if none is specified
+DEFAULT_BOARD="esp32:esp32:esp32"
 
-# Help Function
+# Initialize variables with defaults
+PORT="$DEFAULT_PORT"
+BOARD="$DEFAULT_BOARD"
+
+# --- Help Function ---
 jyhelp_esp() {
-    echo "Usage: jyesp32 [SKETCH_PATH]"
+    echo "Usage: jyesp32 [-p PORT] [-b BOARD_FQBN] [SKETCH_PATH]"
     echo ""
     echo "Arguments:"
-    echo "  SKETCH_PATH    Path to the folder containing the .ino file"
+    echo "  SKETCH_PATH       Path to the folder containing the .ino file"
     echo ""
-    echo "Example:"
-    echo "  jyesp32 ~/MyESPProject"
+    echo "Options:"
+    echo "  -p <port>         Override port (Default: $DEFAULT_PORT)"
+    echo "  -b <fqbn>         Override board FQBN (Default: $DEFAULT_BOARD)"
+    echo "  -h                Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  jyesp32 ~/MySketch                        # Uses default ttyUSB0"
+    echo "  jyesp32 -p /dev/ttyACM1 ~/MySketch        # Targets the S3 on ACM1"
+    echo "  jyesp32 -p /dev/ttyACM1 -b esp32:esp32:esp32s3 ~/MySketch"
 }
 
-# Check for help flag or missing arguments
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || -z "${1:-}" ]]; then
+# --- Parse Flags (getopts) ---
+# This loop looks for -p, -b, and -h flags
+while getopts ":p:b:h" opt; do
+  case ${opt} in
+    p)
+      PORT="$OPTARG"
+      ;;
+    b)
+      BOARD="$OPTARG"
+      ;;
+    h)
+      jyhelp_esp
+      exit 0
+      ;;
+    \?)
+      echo "[!] Invalid option: -$OPTARG" >&2
+      jyhelp_esp
+      exit 1
+      ;;
+    :)
+      echo "[!] Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Shift off the options/flags so $1 becomes the sketch path again
+shift $((OPTIND -1))
+
+# --- Main Logic ---
+
+# Check if a sketch path was provided after the flags
+if [ -z "${1:-}" ]; then
+    echo "[!] Error: Missing sketch path."
     jyhelp_esp
-    exit 0
+    exit 1
 fi
 
 SKETCH_PATH="$1"
@@ -35,25 +78,28 @@ if [ ! -d "$SKETCH_PATH" ]; then
     exit 1
 fi
 
-echo "[*] Target: $BOARD on $PORT"
+echo "=========================================="
+echo "[*] Configuration:"
+echo "    Sketch: $SKETCH_PATH"
+echo "    Board:  $BOARD"
+echo "    Port:   $PORT"
+echo "=========================================="
 
 # 2. Compile (Verification step)
-echo "[*] Compiling and verifying sketch..."
-# Note: ESP32 compilation takes longer than Arduino Uno
+echo "[*] Compiling sketch..."
 if arduino-cli compile --fqbn "$BOARD" "$SKETCH_PATH"; then
-    echo "    → Compilation successful!"
+    echo "    -> Compilation successful!"
 else
-    echo "[!] Error: Compilation failed. Check your code."
+    echo "[!] Error: Compilation failed."
     exit 1
 fi
 
 # 3. Upload
-echo "[*] Uploading to ESP32..."
-# ESP32s sometimes need the --verify flag to ensure flash integrity
+echo "[*] Uploading..."
 if arduino-cli upload -p "$PORT" --fqbn "$BOARD" --verify "$SKETCH_PATH"; then
     echo "[*] Success! Sketch is running."
 else
-    echo "[!] Error: Upload failed. Is the ESP32 plugged into $PORT?"
-    echo "    Note: You may need to hold the 'BOOT' button on the board during 'Connecting...'"
+    echo "[!] Error: Upload failed."
+    echo "    Check connections to $PORT or hold 'BOOT' button."
     exit 1
 fi
