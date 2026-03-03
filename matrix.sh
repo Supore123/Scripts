@@ -68,3 +68,14 @@ sleep 0.06
 echo -e "${SELECTED_ANSI}Authenticating user identity...${RESET}"
 sleep 0.04
 
+# The dynamic loading bar (cut in half to 0.025s per tick)
+echo -n -e "${SELECTED_ANSI}Finalizing system breach: ["
+for i in {1..25}; do
+    echo -n "█"
+    sleep 0.025
+done
+echo -e "] 100%${RESET}"
+sleep 0.25
+
+echo "" # Adds a blank line for spacing before the logo
+
