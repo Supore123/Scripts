@@ -79,3 +79,17 @@ sleep 0.25
 
 echo "" # Adds a blank line for spacing before the logo
 
+# ==========================================
+# FINAL REVEAL (No screen clear!)
+# ==========================================
+
+# Print the matching localized welcome message
+echo -e "${SELECTED_ANSI}"
+
+if command -v figlet >/dev/null 2>&1; then
+    figlet "$USERNAME"
+else
+    echo "=== $USERNAME ==="
+fi
+
+echo -e "\nACCESS GRANTED. Welcome to the mainframe.${RESET}\n"
