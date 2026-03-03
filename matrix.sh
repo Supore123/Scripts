@@ -38,3 +38,33 @@ if command -v cmatrix >/dev/null 2>&1; then
     clear
 fi
 
+# ==========================================
+# THE ULTRA-FAST HACKER TRANSITION
+# ==========================================
+
+sleep 0.05
+echo -e "${SELECTED_ANSI}Initiating root override sequence...${RESET}"
+sleep 0.04
+echo -e "${SELECTED_ANSI}Routing connection through proxy nodes [7 hops]...${RESET}"
+sleep 0.05
+echo -e "${SELECTED_ANSI}Bypassing external firewalls...${RESET}"
+sleep 0.03
+echo -e "${SELECTED_ANSI}Injecting payload into mainframe architecture...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Extracting encrypted hash tables...${RESET}"
+sleep 0.04
+echo -e "${SELECTED_ANSI}Cracking 256-bit AES encryption...${RESET}"
+sleep 0.05
+echo -e "${SELECTED_ANSI}Decrypting secure token...${RESET}"
+sleep 0.03
+echo -e "${SELECTED_ANSI}Spoofing network MAC address...${RESET}"
+sleep 0.04
+echo -e "${SELECTED_ANSI}Disabling automated security daemons...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Verifying cryptographic signatures...${RESET}"
+sleep 0.05
+echo -e "${SELECTED_ANSI}Establishing zero-trace encrypted tunnel...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Authenticating user identity...${RESET}"
+sleep 0.04
+
