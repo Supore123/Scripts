@@ -35,3 +35,23 @@ def get_spotify_client():
         scope="user-read-playback-state,user-modify-playback-state,playlist-read-private",
         cache_path=TOKEN_CACHE
     ))
+# This enhances the show_status function with a visual progress bar.
+def show_status(sp):
+    curr = sp.current_playback()
+    if not curr or not curr.get("item"):
+        console.print("[yellow]⏹️ Nothing playing[/yellow]")
+        return
+
+    track = curr["item"]
+    artists = ", ".join([a["name"] for a in track["artists"]])
+    ms = curr["progress_ms"]
+    total = track["duration_ms"]
+
+    console.print(f"\n[bold green]▶️ {track['name']}[/bold green] - {artists}")
+    
+    with Progress(transient=True) as progress:
+        task = progress.add_task("[cyan]Progress", total=total)
+        progress.update(task, completed=ms)
+    
+    time_fmt = lambda m: f"{m//60000}:{(m%60000)//1000:02d}"
+    console.print(f"   {time_fmt(ms)} / {time_fmt(total)} | 🔊 {curr['device']['name']}")
