@@ -61,3 +61,7 @@ RESET="\033[0m"
 RAND_INDEX=$((RANDOM % 7))
 SELECTED_COLOR="${CMATRIX_COLORS[$RAND_INDEX]}"
 SELECTED_ANSI="${ANSI_COLORS[$RAND_INDEX]}"
+# 1. Matrix Effect
+if command -v cmatrix >/dev/null 2>&1; then
+    timeout --foreground 1.25 cmatrix -b -u 2 -C "$SELECTED_COLOR" 2>/dev/null || true
+fi
