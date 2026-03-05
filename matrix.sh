@@ -49,3 +49,15 @@ sneakers_effect() {
     done
     echo -ne "${RESET}"
 }
+# Terminal setup
+sleep 0.1
+USERNAME="Supore123"
+
+# Colors
+CMATRIX_COLORS=("green" "red" "blue" "white" "yellow" "cyan")
+ANSI_COLORS=("\033[1;32m" "\033[1;31m" "\033[1;34m" "\033[1;37m" "\033[1;33m" "\033[1;36m" "\033[1;35m")
+RESET="\033[0m"
+
+RAND_INDEX=$((RANDOM % 7))
+SELECTED_COLOR="${CMATRIX_COLORS[$RAND_INDEX]}"
+SELECTED_ANSI="${ANSI_COLORS[$RAND_INDEX]}"
