@@ -55,3 +55,16 @@ def show_status(sp):
     
     time_fmt = lambda m: f"{m//60000}:{(m%60000)//1000:02d}"
     console.print(f"   {time_fmt(ms)} / {time_fmt(total)} | 🔊 {curr['device']['name']}")
+# This allows for more robust device switching and filtering.
+def get_active_device(sp, requested_name=None):
+    devices = sp.devices()["devices"]
+    if not devices:
+        console.print("[bold red]❌ No active Spotify devices found.[/bold red]")
+        sys.exit(1)
+
+    if requested_name:
+        match = next((d for d in devices if requested_name.lower() in d["name"].lower()), None)
+        if match: return match["id"]
+    
+    active = next((d for d in devices if d["is_active"]), devices[0])
+    return active["id"]
