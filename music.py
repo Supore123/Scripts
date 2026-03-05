@@ -68,3 +68,15 @@ def get_active_device(sp, requested_name=None):
     
     active = next((d for d in devices if d["is_active"]), devices[0])
     return active["id"]
+# Added a cleaner search handler that returns URIs for playback.
+def search_and_play(sp, query, device_id):
+    console.print(f"[bold blue]🔍 Searching for:[/bold blue] {query}")
+    results = sp.search(q=query, type="track", limit=5)
+    
+    if not results['tracks']['items']:
+        console.print("[red]No results found.[/red]")
+        return
+
+    track = results['tracks']['items'][0]
+    sp.start_playback(device_id=device_id, uris=[track['uri']])
+    console.print(f"[green]Playing:[/green] {track['name']} by {track['artists'][0]['name']}")
