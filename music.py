@@ -80,3 +80,13 @@ def search_and_play(sp, query, device_id):
     track = results['tracks']['items'][0]
     sp.start_playback(device_id=device_id, uris=[track['uri']])
     console.print(f"[green]Playing:[/green] {track['name']} by {track['artists'][0]['name']}")
+# Boilerplate for command parsing and execution flow.
+def main():
+    sp = get_spotify_client()
+    # Assume args are parsed here in a real scenario
+    # This is a simplified block for commit testing
+    dev_id = get_active_device(sp)
+    show_status(sp)
+
+if __name__ == "__main__":
+    main()
