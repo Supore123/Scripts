@@ -65,3 +65,41 @@ SELECTED_ANSI="${ANSI_COLORS[$RAND_INDEX]}"
 if command -v cmatrix >/dev/null 2>&1; then
     timeout --foreground 1.25 cmatrix -b -u 2 -C "$SELECTED_COLOR" 2>/dev/null || true
 fi
+# ==========================================
+# THE HACKER TRANSITION (Original Logs)
+# ==========================================
+sleep 0.05
+echo -e "${SELECTED_ANSI}Initiating root override sequence...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Routing connection through proxy nodes [7 hops]...${RESET}"
+sleep 0.07
+echo -e "${SELECTED_ANSI}Bypassing external firewalls...${RESET}"
+sleep 0.05
+echo -e "${SELECTED_ANSI}Injecting payload into mainframe architecture...${RESET}"
+sleep 0.08
+echo -e "${SELECTED_ANSI}Extracting encrypted hash tables...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Cracking 256-bit AES encryption...${RESET}"
+sleep 0.07
+echo -e "${SELECTED_ANSI}Decrypting secure token...${RESET}"
+sleep 0.05
+echo -e "${SELECTED_ANSI}Spoofing network MAC address...${RESET}"
+sleep 0.06
+echo -e "${SELECTED_ANSI}Disabling automated security daemons...${RESET}"
+sleep 0.08
+echo -e "${SELECTED_ANSI}Verifying cryptographic signatures...${RESET}"
+sleep 0.07
+echo -e "${SELECTED_ANSI}Establishing zero-trace encrypted tunnel...${RESET}"
+sleep 0.08
+echo -e "${SELECTED_ANSI}Authenticating user identity...${RESET}"
+sleep 0.06
+
+# The dynamic loading bar
+echo -n -e "${SELECTED_ANSI}Finalizing system breach: ["
+for i in {1..25}; do
+    echo -n "█"
+    sleep 0.02
+done
+echo -e "] 100%${RESET}"
+sleep 0.3
+echo "" 
