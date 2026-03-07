@@ -103,3 +103,18 @@ done
 echo -e "] 100%${RESET}"
 sleep 0.3
 echo "" 
+# ==========================================
+# FINAL REVEAL (Cinematic Decrypt)
+# ==========================================
+
+if command -v figlet >/dev/null 2>&1; then
+    USER_ASCII=$(figlet "$USERNAME")
+else
+    USER_ASCII="=== $USERNAME ==="
+fi
+
+# Adjusted speeds: 0.0001 for Figlet, 0.002 for the message
+sneakers_effect "$USER_ASCII" "$SELECTED_ANSI" 0.0001
+sneakers_effect "ACCESS GRANTED. Welcome to the mainframe." "$SELECTED_ANSI" 0.002
+
+echo ""
