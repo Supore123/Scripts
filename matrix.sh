@@ -4,11 +4,6 @@
 
 set -euo pipefail
 
-
-
-
-
-
 # Ensure the script only runs if a terminal is attached
 if [ ! -t 0 ] && [ ! -t 1 ]; then
     exit 0
@@ -51,7 +46,7 @@ sneakers_effect() {
 }
 # Terminal setup
 sleep 0.1
-USERNAME="Supore123"
+USERNAME=$(whoami)
 
 # Colors
 CMATRIX_COLORS=("green" "red" "blue" "white" "yellow" "cyan")
