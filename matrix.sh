@@ -4,13 +4,29 @@
 
 set -euo pipefail
 
+# ==========================================
+# CONFIGURATION / TIMING CONSTANTS
+# ==========================================
+# Adjust these for different hardware speeds
+DELAY_INITIAL_BUFFER=0.01    # Initial pause before script starts
+DELAY_MATRIX_DURATION=0.4    # Total time (seconds) cmatrix runs
+DELAY_LOG_LINE=0.01          # Speed of individual hack-log lines
+DELAY_LOG_POST_AUTH=0.1      # Brief pause before the progress bar
+DELAY_PROGRESS_STEP=0.01     # Speed of the █ characters in the bar
+DELAY_POST_BAR=0.1           # Pause after bar hits 100%
+DELAY_SNEAKERS_PAUSE=0.05     # How long the "scrambled" text sits before reveal
+DELAY_REVEAL_FIGLET=0.00005  # Speed of the ASCII name reveal
+DELAY_REVEAL_WELCOME=0.01    # Speed of the final "Access Granted" text
+
+# ==========================================
+# CORE LOGIC
+# ==========================================
+
 # Ensure the script only runs if a terminal is attached
 if [ ! -t 0 ] && [ ! -t 1 ]; then
     exit 0
 fi
-# ==========================================
-# CINEMATIC DECRYPTION FUNCTION
-# ==========================================
+
 sneakers_effect() {
     local input="$1"
     local color="$2"
@@ -19,7 +35,7 @@ sneakers_effect() {
     
     IFS=$'\n' read -rd '' -a lines <<< "$input" || true
 
-    # 1. Initial Scramble (Briefly show gibberish)
+    # 1. Initial Scramble
     echo -ne "${color}"
     for line in "${lines[@]}"; do
         for ((i=0; i<${#line}; i++)); do
@@ -32,7 +48,7 @@ sneakers_effect() {
     # 2. Pause slightly so the scramble is visible
     local num_lines=${#lines[@]}
     echo -ne "\033[${num_lines}A" 
-    sleep 0.2
+    sleep "$DELAY_SNEAKERS_PAUSE"
 
     # 3. Reveal Phase
     for line in "${lines[@]}"; do
@@ -44,8 +60,9 @@ sneakers_effect() {
     done
     echo -ne "${RESET}"
 }
+
 # Terminal setup
-sleep 0.1
+sleep "$DELAY_INITIAL_BUFFER"
 USERNAME=$(whoami)
 
 # Colors
@@ -56,48 +73,50 @@ RESET="\033[0m"
 RAND_INDEX=$((RANDOM % 6))
 SELECTED_COLOR="${CMATRIX_COLORS[$RAND_INDEX]}"
 SELECTED_ANSI="${ANSI_COLORS[$RAND_INDEX]}"
+
 # 1. Matrix Effect
 if command -v cmatrix >/dev/null 2>&1; then
-    timeout --foreground 1.25 cmatrix -b -u 2 -C "$SELECTED_COLOR" 2>/dev/null || true
+    timeout --foreground "$DELAY_MATRIX_DURATION" cmatrix -b -u 2 -C "$SELECTED_COLOR" 2>/dev/null || true
 fi
+
 # ==========================================
 # THE HACKER TRANSITION (Original Logs)
 # ==========================================
-sleep 0.05
 echo -e "${SELECTED_ANSI}Initiating root override sequence...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Routing connection through proxy nodes [7 hops]...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Bypassing external firewalls...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Injecting payload into mainframe architecture...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Extracting encrypted hash tables...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Cracking 256-bit AES encryption...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Decrypting secure token...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Spoofing network MAC address...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Disabling automated security daemons...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Verifying cryptographic signatures...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Establishing zero-trace encrypted tunnel...${RESET}"
-sleep 0.1
+sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}Authenticating user identity...${RESET}"
-sleep 0.2
+sleep "$DELAY_LOG_POST_AUTH"
 
 # The dynamic loading bar
 echo -n -e "${SELECTED_ANSI}Finalizing system breach: ["
 for i in {1..25}; do
     echo -n "█"
-    sleep 0.02
+    sleep "$DELAY_PROGRESS_STEP"
 done
 echo -e "] 100%${RESET}"
-sleep 0.3
+sleep "$DELAY_POST_BAR"
 echo "" 
+
 # ==========================================
 # FINAL REVEAL (Cinematic Decrypt)
 # ==========================================
@@ -108,8 +127,7 @@ else
     USER_ASCII="=== $USERNAME ==="
 fi
 
-# Adjusted speeds: 0.0001 for Figlet, 0.002 for the message
-sneakers_effect "$USER_ASCII" "$SELECTED_ANSI" 0.0001
-sneakers_effect "ACCESS GRANTED. Welcome back $USERNAME" "$SELECTED_ANSI" 0.002
+sneakers_effect "$USER_ASCII" "$SELECTED_ANSI" "$DELAY_REVEAL_FIGLET"
+sneakers_effect "ACCESS GRANTED. Welcome back $USERNAME" "$SELECTED_ANSI" "$DELAY_REVEAL_WELCOME"
 
 echo ""
