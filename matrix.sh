@@ -1,29 +1,64 @@
 #!/usr/bin/env bash
-# DESC: Randomized Matrix boot with original logs and cinematic decryption
-# TAG: matrix, boot, terminal, greeting, ascii
+# DESC: Cross-platform System Diagnostic Boot with Cinematic Decryption
+# TAG: matrix, boot, terminal, hardware, unix
 
 set -euo pipefail
 
 # ==========================================
 # CONFIGURATION / TIMING CONSTANTS
 # ==========================================
-# Adjust these for different hardware speeds
-DELAY_INITIAL_BUFFER=0.01    # Initial pause before script starts
-DELAY_MATRIX_DURATION=0.4    # Total time (seconds) cmatrix runs
-DELAY_LOG_LINE=0.01          # Speed of individual hack-log lines
-DELAY_LOG_POST_AUTH=0.1      # Brief pause before the progress bar
-DELAY_PROGRESS_STEP=0.01     # Speed of the █ characters in the bar
-DELAY_POST_BAR=0.1           # Pause after bar hits 100%
-DELAY_SNEAKERS_PAUSE=0.05     # How long the "scrambled" text sits before reveal
-DELAY_REVEAL_FIGLET=0.00005  # Speed of the ASCII name reveal
-DELAY_REVEAL_WELCOME=0.01    # Speed of the final "Access Granted" text
+DELAY_INITIAL_BUFFER=0.01    
+DELAY_MATRIX_DURATION=0.4    
+DELAY_LOG_LINE=0.02          
+DELAY_LOG_POST_AUTH=0.1      
+DELAY_PROGRESS_STEP=0.01     
+DELAY_POST_BAR=0.1           
+DELAY_SNEAKERS_PAUSE=0.05    
+DELAY_REVEAL_FIGLET=0.00005  
+DELAY_REVEAL_WELCOME=0.01    
+
+# ==========================================
+# SYSTEM DATA GATHERING (Cross-Platform)
+# ==========================================
+USERNAME=$(whoami)
+HOSTNAME=$(hostname)
+KERNEL=$(uname -r)
+
+if [ -f /etc/os-release ]; then
+    OS_NAME=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d'"' -f2)
+else
+    OS_NAME=$(uname -s)
+fi
+
+IP_ADDR=$(hostname -I | awk '{print $1}')
+[ -z "$IP_ADDR" ] && IP_ADDR="127.0.0.1 (Offline)"
+
+MEM_FREE=$(free -h | awk '/^Mem:/ {print $4 "/" $2}')
+UPTIME=$(uptime -p | sed 's/up //')
+
+# Battery Check (Laptop vs Pi)
+if [ -d /sys/class/power_supply/BAT0 ]; then
+    BATT_STAT=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo "N/A")
+    BATTERY_STR="[OK] Power Cell Capacity: ${BATT_STAT}%"
+else
+    BATTERY_STR=""
+fi
+
+HOUR=$(date +%H)
+if [ "$HOUR" -lt 12 ]; then GREET="Good Morning"; 
+elif [ "$HOUR" -lt 18 ]; then GREET="Good Afternoon"; 
+else GREET="Good Evening"; fi
 
 # ==========================================
 # CORE LOGIC
 # ==========================================
 
-# Ensure the script only runs if a terminal is attached
 if [ ! -t 0 ] && [ ! -t 1 ]; then
+    exit 0
+fi
+
+# FAST SKIP: Press any key within 0.1s to skip
+if read -t 0.1 -n 1; then
     exit 0
 fi
 
@@ -45,12 +80,12 @@ sneakers_effect() {
         echo "" 
     done
 
-    # 2. Pause slightly so the scramble is visible
+    # 2. Pause
     local num_lines=${#lines[@]}
     echo -ne "\033[${num_lines}A" 
     sleep "$DELAY_SNEAKERS_PAUSE"
 
-    # 3. Reveal Phase
+    # 3. Reveal Phase (Glitches removed)
     for line in "${lines[@]}"; do
         for ((i=0; i<${#line}; i++)); do
             echo -n "${line:$i:1}"
@@ -61,13 +96,9 @@ sneakers_effect() {
     echo -ne "${RESET}"
 }
 
-# Terminal setup
-sleep "$DELAY_INITIAL_BUFFER"
-USERNAME=$(whoami)
-
 # Colors
 CMATRIX_COLORS=("green" "red" "blue" "white" "yellow" "cyan")
-ANSI_COLORS=("\033[1;32m" "\033[1;31m" "\033[1;34m" "\033[1;37m" "\033[1;33m" "\033[1;36m" "\033[1;35m")
+ANSI_COLORS=("\033[1;32m" "\033[1;31m" "\033[1;34m" "\033[1;37m" "\033[1;33m" "\033[1;33m" "\033[1;35m")
 RESET="\033[0m"
 
 RAND_INDEX=$((RANDOM % 6))
@@ -80,35 +111,37 @@ if command -v cmatrix >/dev/null 2>&1; then
 fi
 
 # ==========================================
-# THE HACKER TRANSITION (Original Logs)
+# REAL SYSTEM LOGS
 # ==========================================
-echo -e "${SELECTED_ANSI}Initiating root override sequence...${RESET}"
+sleep "$DELAY_INITIAL_BUFFER"
+echo -e "${SELECTED_ANSI}[OK] Identifying Host: $HOSTNAME${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Routing connection through proxy nodes [7 hops]...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] OS Detected: $OS_NAME${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Bypassing external firewalls...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Kernel Release: $KERNEL${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Injecting payload into mainframe architecture...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Network Node: $IP_ADDR${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Extracting encrypted hash tables...${RESET}"
+
+# Only show battery if it exists
+if [ -n "$BATTERY_STR" ]; then
+    echo -e "${SELECTED_ANSI}$BATTERY_STR${RESET}"
+    sleep "$DELAY_LOG_LINE"
+fi
+
+echo -e "${SELECTED_ANSI}[OK] Memory Availability: $MEM_FREE${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Cracking 256-bit AES encryption...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Session Uptime: $UPTIME${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Decrypting secure token...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Initializing User Shell Environment...${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Spoofing network MAC address...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Verifying RSA Cryptographic Keys...${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Disabling automated security daemons...${RESET}"
-sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Verifying cryptographic signatures...${RESET}"
-sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Establishing zero-trace encrypted tunnel...${RESET}"
-sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}Authenticating user identity...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Encrypted Tunnel Established...${RESET}"
 sleep "$DELAY_LOG_POST_AUTH"
 
 # The dynamic loading bar
-echo -n -e "${SELECTED_ANSI}Finalizing system breach: ["
+echo -n -e "${SELECTED_ANSI}Mounting User Filesystems: ["
 for i in {1..25}; do
     echo -n "█"
     sleep "$DELAY_PROGRESS_STEP"
@@ -118,9 +151,8 @@ sleep "$DELAY_POST_BAR"
 echo "" 
 
 # ==========================================
-# FINAL REVEAL (Cinematic Decrypt)
+# FINAL REVEAL
 # ==========================================
-
 if command -v figlet >/dev/null 2>&1; then
     USER_ASCII=$(figlet "$USERNAME")
 else
@@ -128,6 +160,6 @@ else
 fi
 
 sneakers_effect "$USER_ASCII" "$SELECTED_ANSI" "$DELAY_REVEAL_FIGLET"
-sneakers_effect "ACCESS GRANTED. Welcome back $USERNAME" "$SELECTED_ANSI" "$DELAY_REVEAL_WELCOME"
+sneakers_effect "ACCESS GRANTED. $GREET, $USERNAME" "$SELECTED_ANSI" "$DELAY_REVEAL_WELCOME"
 
 echo ""
