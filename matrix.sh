@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DESC: Cross-platform System Diagnostic Boot with Cinematic Decryption
+# DESC: Cross-platform System Diagnostic Boot with Synchronized Colors
 # TAG: matrix, boot, terminal, hardware, unix
 
 set -euo pipefail
@@ -36,7 +36,13 @@ IP_ADDR=$(hostname -I | awk '{print $1}')
 MEM_FREE=$(free -h | awk '/^Mem:/ {print $4 "/" $2}')
 UPTIME=$(uptime -p | sed 's/up //')
 
-# Battery Check (Laptop vs Pi)
+# --- NEW DYNAMIC LOG DATA ---
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
+CPU_LOAD=$(top -bn1 | grep "load average" | awk '{print $(NF-2)}' | sed 's/,//')
+PROCESS_COUNT=$(ps ax | wc -l | tr -d ' ')
+SHELL_PATH=$SHELL
+
+# Battery Check
 if [ -d /sys/class/power_supply/BAT0 ]; then
     BATT_STAT=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo "N/A")
     BATTERY_STR="[OK] Power Cell Capacity: ${BATT_STAT}%"
@@ -57,7 +63,6 @@ if [ ! -t 0 ] && [ ! -t 1 ]; then
     exit 0
 fi
 
-# FAST SKIP: Press any key within 0.1s to skip
 if read -t 0.1 -n 1; then
     exit 0
 fi
@@ -70,7 +75,6 @@ sneakers_effect() {
     
     IFS=$'\n' read -rd '' -a lines <<< "$input" || true
 
-    # 1. Initial Scramble
     echo -ne "${color}"
     for line in "${lines[@]}"; do
         for ((i=0; i<${#line}; i++)); do
@@ -80,12 +84,10 @@ sneakers_effect() {
         echo "" 
     done
 
-    # 2. Pause
     local num_lines=${#lines[@]}
     echo -ne "\033[${num_lines}A" 
     sleep "$DELAY_SNEAKERS_PAUSE"
 
-    # 3. Reveal Phase (Glitches removed)
     for line in "${lines[@]}"; do
         for ((i=0; i<${#line}; i++)); do
             echo -n "${line:$i:1}"
@@ -93,15 +95,17 @@ sneakers_effect() {
         done
         echo "" 
     done
-    echo -ne "${RESET}"
+    echo -ne "\033[0m"
 }
 
-# Colors
-CMATRIX_COLORS=("green" "red" "blue" "white" "yellow" "cyan")
-ANSI_COLORS=("\033[1;32m" "\033[1;31m" "\033[1;34m" "\033[1;37m" "\033[1;33m" "\033[1;33m" "\033[1;35m")
+# --- SYNCHRONIZED COLORS ---
+# cmatrix supports: green, red, blue, white, yellow, cyan, magenta
+CMATRIX_COLORS=("green" "red" "blue" "white" "yellow" "cyan" "magenta")
+ANSI_COLORS=("\033[1;32m" "\033[1;31m" "\033[1;34m" "\033[1;37m" "\033[1;33m" "\033[1;36m" "\033[1;35m")
 RESET="\033[0m"
 
-RAND_INDEX=$((RANDOM % 6))
+# Use the same index for both arrays
+RAND_INDEX=$((RANDOM % ${#CMATRIX_COLORS[@]}))
 SELECTED_COLOR="${CMATRIX_COLORS[$RAND_INDEX]}"
 SELECTED_ANSI="${ANSI_COLORS[$RAND_INDEX]}"
 
@@ -111,37 +115,34 @@ if command -v cmatrix >/dev/null 2>&1; then
 fi
 
 # ==========================================
-# REAL SYSTEM LOGS
+# REAL SYSTEM LOGS (Now with dynamic hardware data)
 # ==========================================
 sleep "$DELAY_INITIAL_BUFFER"
-echo -e "${SELECTED_ANSI}[OK] Identifying Host: $HOSTNAME${RESET}"
-sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] OS Detected: $OS_NAME${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Host: $HOSTNAME | OS: $OS_NAME${RESET}"
 sleep "$DELAY_LOG_LINE"
 echo -e "${SELECTED_ANSI}[OK] Kernel Release: $KERNEL${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] Network Node: $IP_ADDR${RESET}"
+echo -e "${SELECTED_ANSI}[OK] IPv4 Address: $IP_ADDR${RESET}"
 sleep "$DELAY_LOG_LINE"
 
-# Only show battery if it exists
 if [ -n "$BATTERY_STR" ]; then
     echo -e "${SELECTED_ANSI}$BATTERY_STR${RESET}"
     sleep "$DELAY_LOG_LINE"
 fi
 
-echo -e "${SELECTED_ANSI}[OK] Memory Availability: $MEM_FREE${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Memory: $MEM_FREE | Load: $CPU_LOAD${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] Session Uptime: $UPTIME${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Root Filesystem: $DISK_USAGE used${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] Initializing User Shell Environment...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Active Task Count: $PROCESS_COUNT tasks${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] Verifying RSA Cryptographic Keys...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Shell Environment: $SHELL_PATH${RESET}"
 sleep "$DELAY_LOG_LINE"
-echo -e "${SELECTED_ANSI}[OK] Encrypted Tunnel Established...${RESET}"
+echo -e "${SELECTED_ANSI}[OK] Uptime: $UPTIME${RESET}"
 sleep "$DELAY_LOG_POST_AUTH"
 
-# The dynamic loading bar
-echo -n -e "${SELECTED_ANSI}Mounting User Filesystems: ["
+# Loading bar
+echo -n -e "${SELECTED_ANSI}Mounting Filesystems: ["
 for i in {1..25}; do
     echo -n "█"
     sleep "$DELAY_PROGRESS_STEP"
