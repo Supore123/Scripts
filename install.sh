@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# JYScripts Dependency Installer
-# Installs all system packages, Python packages, and external tools
-# required by every script in the JYScripts collection.
+# DESC: Install all system, pip, and external dependencies required by JYScripts
+# TAG: install, setup, dependencies, apt, pip, tools
+# ARG: None - installs everything automatically, reports what needs manual setup
+# EXAMPLE: jyinstall
 
 set -euo pipefail
 
@@ -98,7 +99,7 @@ apt_install \
 # airpods.sh
 # bluetoothctl (bluez), pactl (pulseaudio-utils)
 # ─────────────────────────────────────────
-info "Installing bluetooth + audio dps (airpods.sh)..."
+info "Installing bluetooth + audio deps (airpods.sh)..."
 apt_install \
     bluez \
     pulseaudio-utils
@@ -117,7 +118,6 @@ if ! command -v arduino-cli &>/dev/null; then
     info "Installing arduino-cli..."
     if curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR="$HOME/.local/bin" sh &>/dev/null; then
         ok "arduino-cli installed to ~/.local/bin"
-        # Ensure ~/.local/bin is on PATH
         export PATH="$HOME/.local/bin:$PATH"
         if ! grep -q 'HOME/.local/bin' "$HOME/.bashrc" 2>/dev/null; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
@@ -133,20 +133,19 @@ fi
 
 # ─────────────────────────────────────────
 # autocommit.py
-# Uses only stdlib (subprocess, shutil, re, etc.) — no extra deps
+# Uses only stdlib — no extra deps
 # ─────────────────────────────────────────
 ok "autocommit.py — stdlib only, no extra deps needed"
 
 # ─────────────────────────────────────────
 # bloat.py (jydiskbloat)
-# Uses only stdlib (os, argparse, shutil) — no extra deps
+# Uses only stdlib — no extra deps
 # ─────────────────────────────────────────
 ok "bloat.py — stdlib only, no extra deps needed"
 
 # ─────────────────────────────────────────
 # bright.py (jybright)
-# Uses only stdlib — no extra deps
-# Needs udev rule or sudo for backlight write access
+# Uses only stdlib — needs udev rule for backlight write access
 # ─────────────────────────────────────────
 ok "bright.py — stdlib only"
 if [ ! -f /etc/udev/rules.d/90-backlight.rules ]; then
@@ -161,7 +160,7 @@ fi
 
 # ─────────────────────────────────────────
 # chat.py (jychat)
-# colorama, difflib (stdlib)
+# colorama
 # ─────────────────────────────────────────
 info "Installing chat.py deps..."
 pip_install colorama
@@ -188,7 +187,7 @@ ok "define.sh — curl + jq already covered"
 
 # ─────────────────────────────────────────
 # env.sh (jyenv)
-# conda — must be manually installed (Miniconda/Anaconda)
+# conda — must be manually installed
 # ─────────────────────────────────────────
 if command -v conda &>/dev/null; then
     ok "conda already available"
@@ -206,22 +205,19 @@ ok "etym.py — stdlib only, no extra deps needed"
 
 # ─────────────────────────────────────────
 # find.sh (jyfind)
-# fzf, fd-find (or fd)
+# fzf, fd-find, bat (optional preview)
 # ─────────────────────────────────────────
 info "Installing find.sh deps..."
 apt_install fzf fd-find
 
-# fd-find installs as 'fdfind' on Debian/Ubuntu; create 'fd' alias
 if command -v fdfind &>/dev/null && ! command -v fd &>/dev/null; then
     mkdir -p "$HOME/.local/bin"
     ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
     ok "Created fd -> fdfind symlink in ~/.local/bin"
 fi
 
-# Optional: bat for file preview in fzf
 if ! command -v bat &>/dev/null; then
     apt_install bat
-    # On Ubuntu/Debian bat installs as 'batcat'
     if command -v batcat &>/dev/null && ! command -v bat &>/dev/null; then
         ln -sf "$(which batcat)" "$HOME/.local/bin/bat"
         ok "Created bat -> batcat symlink in ~/.local/bin"
@@ -260,7 +256,7 @@ pip_install spotipy rich
 for var in SPOTIFY_CLIENT_ID SPOTIFY_CLIENT_SECRET; do
     if [ -z "${!var:-}" ]; then
         warn "$var env var not set — required by music.py (jymusic)"
-        warn "Set it in ~/.bashrc: export $var=your_value"
+        warn "Add to ~/.bashrc: export $var=your_value"
         ERRORS+=("env_var: $var")
     else
         ok "$var is set"
@@ -275,7 +271,7 @@ ok "myip.sh — curl already covered"
 
 # ─────────────────────────────────────────
 # network.py (jynetcheck)
-# speedtest-cli, socket (stdlib)
+# speedtest-cli
 # ─────────────────────────────────────────
 info "Installing network.py deps..."
 pip_install speedtest-cli
@@ -301,14 +297,14 @@ apt_install libnotify-bin
 
 # ─────────────────────────────────────────
 # ssh.py (jyssh)
-# openssh-client, sshpass (optional), stdlib only for Python side
+# openssh-client, sshpass (optional)
 # ─────────────────────────────────────────
 info "Installing ssh.py deps..."
 apt_install openssh-client sshpass
 
 # ─────────────────────────────────────────
 # sysinfo.sh (jysysinfo)
-# upower, nvidia-smi (optional, GPU only)
+# upower, nvidia-smi (optional)
 # ─────────────────────────────────────────
 info "Installing sysinfo.sh deps..."
 apt_install upower
@@ -375,10 +371,10 @@ else
     done
     echo ""
     echo -e "${CYAN}Manual install links:${RESET}"
-    echo "  conda:        https://docs.conda.io/en/latest/miniconda.html"
-    echo "  protonvpn:    https://protonvpn.com/support/linux-vpn-setup/"
-    echo "  google-chrome:https://www.google.com/chrome/"
-    echo "  arduino-cli:  https://arduino.github.io/arduino-cli/latest/installation/"
+    echo "  conda:         https://docs.conda.io/en/latest/miniconda.html"
+    echo "  protonvpn:     https://protonvpn.com/support/linux-vpn-setup/"
+    echo "  google-chrome: https://www.google.com/chrome/"
+    echo "  arduino-cli:   https://arduino.github.io/arduino-cli/latest/installation/"
 fi
 
 echo ""
@@ -389,4 +385,4 @@ echo "       export GITHUB_TOKEN=..."
 echo "       export SPOTIFY_CLIENT_ID=..."
 echo "       export SPOTIFY_CLIENT_SECRET=..."
 echo "  3. Run: sudo jyupdate   (installs all scripts to /usr/local/bin)"
-echo ""e
+echo ""
