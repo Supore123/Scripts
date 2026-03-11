@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# DESC: Toggle Proton VPN and manage Incognito Chrome tabs
-# TAG: vpn, network, privacy, proton, chrome
-# ARG: None - toggles connection
+# DESC: Toggle Proton VPN and manage Firefox Private tabs
+# TAG: vpn, network, privacy, proton, firefox
 # EXAMPLE: jyvpn
 
 set -euo pipefail
+
+URL_CACHE="$HOME/.chrome_bookmarks"
+FIREFOX_PROFILE="$HOME/snap/firefox/common/.mozilla/firefox/zcmvniy2.jyvpn"
+VPN_PASSWORD="password"
 
 log() { echo -e "\033[1;32m[*]\033[0m $*"; }
 
@@ -16,44 +19,59 @@ kill_gui() {
     fi
 }
 
-# New function to handle Chrome Incognito
-manage_chrome() {
+manage_firefox() {
     local action=$1
+
     if [[ "$action" == "open" ]]; then
-        log "Launching Chrome Incognito..."
-        # Opens a new incognito window and detaches it from the terminal
-        google-chrome --incognito "about:blank" >/dev/null 2>&1 &
+        log "Launching Firefox Private..."
+        if [[ -s "$URL_CACHE" ]]; then
+            mapfile -t sites < <(grep -v '^#' "$URL_CACHE" | grep -v '^$')
+        else
+            sites=("about:blank")
+        fi
+
+        # Open first URL in private window
+        firefox --profile "$FIREFOX_PROFILE" --private-window "${sites[0]}" >/dev/null 2>&1 &
+        disown
+
+        # Open remaining URLs as new tabs in the same private window
+        if [[ ${#sites[@]} -gt 1 ]]; then
+            sleep 2
+            for url in "${sites[@]:1}"; do
+                firefox --profile "$FIREFOX_PROFILE" --new-tab "$url" >/dev/null 2>&1 &
+                disown
+            done
+        fi
+        log "Firefox launched."
+
     elif [[ "$action" == "close" ]]; then
-        log "Closing all Incognito tabs..."
-        # This kills processes specifically marked with the incognito flag
-        pkill -f "google-chrome.*--incognito" || true
+        log "Closing VPN Firefox session..."
+        pkill -f "firefox.*zcmvniy2.jyvpn" 2>/dev/null || true
+        log "Firefox closed."
     fi
 }
 
 if ! command -v protonvpn >/dev/null; then
-  echo "Error: protonvpn command not found."
-  exit 1
+    echo "Error: protonvpn command not found."
+    exit 1
 fi
 
 kill_gui
 
-# Check connection status
 if ip link show | grep -qE "proton0|tun0"; then
-    log "VPN connection detected. Disconnecting..."
-    
-    # 1. Close Chrome Incognito FIRST for privacy
-    manage_chrome "close"
-    
-    # 2. Disconnect VPN
+    log "VPN active. Disconnecting..."
+    manage_firefox "close"
     protonvpn disconnect >/dev/null
     log "Disconnected."
 else
-    log "VPN is disconnected. Connecting..."
-    
-    # 1. Connect VPN
+    password=$(zenity --password --title="jyvpn" --text="Enter password to connect:") || { log "Aborted."; exit 0; }
+    if [[ "$password" != "$VPN_PASSWORD" ]]; then
+        zenity --error --title="jyvpn" --text="Incorrect password."
+        log "Wrong password. Aborted."
+        exit 1
+    fi
+    log "VPN inactive. Connecting..."
     protonvpn connect >/dev/null
     log "Connected."
-    
-    # 2. Open Chrome Incognito AFTER connection is secured
-    manage_chrome "open"
+    manage_firefox "open"
 fi
