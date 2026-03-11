@@ -107,3 +107,4 @@ keybind = shift+down=scroll_page_lines:3
 # ─────────────────────────────────────────
 keybind = ctrl+shift+comma=reload_config
 keybind = ctrl+f11=toggle_quick_terminal
+
