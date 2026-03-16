@@ -1,77 +1,57 @@
 #!/usr/bin/env bash
-# DESC: Toggle Proton VPN and manage Firefox Private tabs
-# TAG: vpn, network, privacy, proton, firefox
-# EXAMPLE: jyvpn
+# DESC: Toggle Proton VPN, Password Check, and Chrome Incognito with Bookmarks
+# TAG: vpn, chrome, security
 
 set -euo pipefail
 
-URL_CACHE="$HOME/.chrome_bookmarks"
-FIREFOX_PROFILE="$HOME/snap/firefox/common/.mozilla/firefox/zcmvniy2.jyvpn"
-VPN_PASSWORD="password"
+# --- CONFIGURATION ---
+BOOKMARKS="$HOME/.chrome_bookmarks"
+# Set your desired script password here
+SCRIPT_PASSWORD="password"
 
-log() { echo -e "\033[1;32m[*]\033[0m $*"; }
-
-kill_gui() {
-    if pgrep -f "protonvpn-app|protonvpn-gui" >/dev/null; then
-        log "ProtonVPN GUI detected. Killing process..."
-        pkill -f "protonvpn-app|protonvpn-gui" || true
-        sleep 1
-    fi
-}
-
-manage_firefox() {
-    local action=$1
-
-    if [[ "$action" == "open" ]]; then
-        log "Launching Firefox Private..."
-        if [[ -s "$URL_CACHE" ]]; then
-            mapfile -t sites < <(grep -v '^#' "$URL_CACHE" | grep -v '^$')
-        else
-            sites=("about:blank")
-        fi
-
-        # Open first URL in private window
-        firefox --profile "$FIREFOX_PROFILE" --private-window "${sites[0]}" >/dev/null 2>&1 &
-        disown
-
-        # Open remaining URLs as new tabs in the same private window
-        if [[ ${#sites[@]} -gt 1 ]]; then
-            sleep 2
-            for url in "${sites[@]:1}"; do
-                firefox --profile "$FIREFOX_PROFILE" --new-tab "$url" >/dev/null 2>&1 &
-                disown
-            done
-        fi
-        log "Firefox launched."
-
-    elif [[ "$action" == "close" ]]; then
-        log "Closing VPN Firefox session..."
-        pkill -f "firefox.*zcmvniy2.jyvpn" 2>/dev/null || true
-        log "Firefox closed."
-    fi
-}
-
-if ! command -v protonvpn >/dev/null; then
-    echo "Error: protonvpn command not found."
-    exit 1
+# 1. Kill the Proton VPN GUI if it's running
+if pgrep -f "protonvpn-app|protonvpn-gui" >/dev/null; then
+    pkill -9 -f "protonvpn-app|protonvpn-gui" || true
+    sleep 1
 fi
 
-kill_gui
-
-if ip link show | grep -qE "proton0|tun0"; then
-    log "VPN active. Disconnecting..."
-    manage_firefox "close"
+# 2. Toggle Logic
+if ip link show | grep -qE "proton|tun0|ipv6leak"; then
+    # --- DISCONNECTING ---
+    
+    pkill -9 -f "chrome-vpn-session" || true
+    rm -rf /tmp/chrome-vpn-session
+    
     protonvpn disconnect >/dev/null
-    log "Disconnected."
 else
-    password=$(zenity --password --title="jyvpn" --text="Enter password to connect:") || { log "Aborted."; exit 0; }
-    if [[ "$password" != "$VPN_PASSWORD" ]]; then
-        zenity --error --title="jyvpn" --text="Incorrect password."
-        log "Wrong password. Aborted."
+    # --- PASSWORD CHECK ---
+    # Opens a graphical password entry box
+    INPUT_PASS=$(zenity --password --title="VPN Access Control" --text="Enter password to enable VPN and Browser:")
+    
+    # If the user hits cancel or enters the wrong password
+    if [[ "$INPUT_PASS" != "$SCRIPT_PASSWORD" ]]; then
+        notify-send "Access Denied" "Incorrect password or action cancelled."
         exit 1
     fi
-    log "VPN inactive. Connecting..."
-    protonvpn connect >/dev/null
-    log "Connected."
-    manage_firefox "open"
+    
+    if protonvpn connect; then
+        # Read the bookmarks into an array
+        if [[ -f "$BOOKMARKS" ]]; then
+            mapfile -t urls < <(grep -v '^\s*$\|^\s*#' "$BOOKMARKS")
+        else
+            urls=("about:blank")
+        fi
+
+	# Launch Chrome with all URLs as tabs
+	google-chrome --incognito --new-window \
+    		--user-data-dir="/tmp/chrome-vpn-session" \
+	    --no-first-run \
+	    --no-default-browser-check \
+	    --start-maximized \
+	    "${urls[@]}" >/dev/null 2>&1 &
+       disown
+    else
+        notify-send "VPN" "Failed to connect."
+        exit 1
+    fi
 fi
