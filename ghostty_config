@@ -10,14 +10,14 @@ font-thicken = true
 font-feature = liga
 bold-is-bright = true
 
-background-opacity = 0.7
+background-opacity = 0.8
 window-decoration = false
 window-padding-x = 6
 window-padding-y = 4
 window-padding-balance = true
 
 # Dim inactive splits to stay focused
-unfocused-split-opacity = 0.4
+unfocused-split-opacity = 0.3
 
 cursor-style = bar
 cursor-style-blink = true
