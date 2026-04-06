@@ -8,7 +8,9 @@
 # ARG: --port PORT     SSH port (overrides saved)
 # ARG: --identity FILE SSH identity file (optional)
 # ARG: --setup-key NAME Generate/local key and copy public key to host (password required once)
-# ARG: --no-ask         Non-interactive prompts (use with care when scripting)
+# ARG: --no-ask        Non-interactive prompts (use with care when scripting)
+# ARG: -X              Enable X11 forwarding
+# ARG: -Y              Enable trusted X11 forwarding
 
 import os
 import json
@@ -44,7 +46,9 @@ parser.add_argument("--port", type=int, help="SSH port override")
 parser.add_argument("--identity", type=str, help="SSH identity file")
 parser.add_argument("--setup-key", type=str, help="Generate/local key (if missing) and copy public key to named host")
 parser.add_argument("--no-ask", action="store_true", help="Non-interactive mode for scripting (use with care)")
-args = parser.parse_args()
+parser.add_argument("-X", action="store_true", help="Enable X11 forwarding")
+parser.add_argument("-Y", action="store_true", help="Enable trusted X11 forwarding")
+args, unknown = parser.parse_known_args()
 
 # -------------------------
 # Helper Functions
@@ -63,7 +67,8 @@ def list_hosts():
         display_port = info.get("port", 22)
         display_identity = info.get("identity", "")
         pw_set = "yes" if info.get("password") else "no"
-        print(f"- {name}: {info['user']}@{info['hostname']}:{display_port}  identity={display_identity or 'none'}  password_stored={pw_set}")
+        x11_forward = info.get("x11", "none")
+        print(f"- {name}: {info['user']}@{info['hostname']}:{display_port}  identity={display_identity or 'none'}  password_stored={pw_set} x11={x11_forward}")
     print()
 
 def prompt(prompt_text, default=None, allow_empty=False):
@@ -100,11 +105,17 @@ def add_host():
             print("[ERROR] Passwords do not match. Host not added.")
             return
 
+    x11 = prompt("Enable X11 forwarding by default? (-X, -Y, or none)", "none").strip()
+    if x11 not in ["-X", "-Y"]:
+         x11 = None
+
     hosts[name] = {"hostname": hostname, "user": user, "port": port}
     if identity:
         hosts[name]["identity"] = identity
     if password:
         hosts[name]["password"] = password
+    if x11:
+         hosts[name]["x11"] = x11
 
     save_config()
     print(f"[*] Host '{name}' added!")
@@ -219,18 +230,33 @@ def connect_host(name):
     port = args.port or info.get("port", 22)
     identity = args.identity or info.get("identity")
     password = info.get("password")
+    
+    # Determine X11 flag: command line args override stored config
+    x11_flag = None
+    if args.Y:
+        x11_flag = "-Y"
+    elif args.X:
+        x11_flag = "-X"
+    elif "x11" in info:
+         x11_flag = info["x11"]
 
     cmd = []
     use_sshpass = False
-    if identity:
-        # use explicit identity
-        cmd = ["ssh", "-i", identity, "-p", str(port), f"{user}@{hostname}"]
-    elif password and SSHPASS:
-        # use sshpass to pass password (insecure)
-        use_sshpass = True
-        cmd = ["sshpass", "-p", password, "ssh", "-p", str(port), f"{user}@{hostname}"]
+    
+    # Base ssh command setup
+    if password and SSHPASS:
+         use_sshpass = True
+         cmd = ["sshpass", "-p", password, "ssh"]
     else:
-        cmd = ["ssh", "-p", str(port), f"{user}@{hostname}"]
+         cmd = ["ssh"]
+         
+    if x11_flag:
+        cmd.append(x11_flag)
+        
+    if identity:
+        cmd.extend(["-i", identity])
+        
+    cmd.extend(["-p", str(port), f"{user}@{hostname}"])
 
     # If additional args were passed after --host, allow calling arbitrary remote command
     # If user invoked script like: ssh.py --host name ls -la  (argparse stops at known args by default)
@@ -250,12 +276,9 @@ def connect_host(name):
     if trailing:
         remote_cmd = " ".join([subprocess.list2cmdline(trailing)])
         # If using sshpass include the remote command in the ssh invocation
-        if use_sshpass:
-            cmd += [remote_cmd]
-        else:
-            cmd += [remote_cmd]
+        cmd += [remote_cmd]
 
-    print(f"[*] Connecting to {user}@{hostname}:{port} {'with identity ' + identity if identity else ''} ...")
+    print(f"[*] Connecting to {user}@{hostname}:{port} {'with identity ' + identity if identity else ''} {'with ' + x11_flag if x11_flag else ''}...")
     try:
         subprocess.run(cmd)
     except FileNotFoundError as e:
@@ -295,11 +318,11 @@ else:
     print("\nAvailable hosts:")
     for i, name in enumerate(hosts.keys(), start=1):
         info = hosts[name]
-        print(f"{i}. {name}: {info['user']}@{info['hostname']}:{info.get('port',22)}")
+        x11_str = f" [X11: {info['x11']}]" if 'x11' in info else ""
+        print(f"{i}. {name}: {info['user']}@{info['hostname']}:{info.get('port',22)}{x11_str}")
     choice = prompt(f"Select host [1-{len(hosts)}]")
     if not choice or not choice.isdigit() or not (1 <= int(choice) <= len(hosts)):
         print("[ERROR] Invalid choice")
         sys.exit(1)
     selected = list(hosts.keys())[int(choice)-1]
     connect_host(selected)
-
