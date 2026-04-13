@@ -67,8 +67,10 @@ def get_recent_activity(username):
         if e["type"] == "PullRequestEvent" and e["payload"]["action"] == "opened"
     )
     prs_merged = sum(
-        1 for e in events
-        if e["type"] == "PullRequestEvent" and e["payload"]["action"] == "closed" and e["payload"]["pull_request"]["merged"]
+    1 for e in events
+    if e["type"] == "PullRequestEvent" 
+    and e["payload"].get("action") == "closed" 
+    and e["payload"].get("pull_request", {}).get("merged") is True
     )
     issues_opened = sum(
         1 for e in events
