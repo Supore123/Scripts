@@ -1,31 +1,24 @@
-#!/usr/bin/env bash
 # ~/.config/ghostty/config
+
 # ─────────────────────────────────────────
 # APPEARANCE
 # ─────────────────────────────────────────
-theme = Adventure Time
-font-family = JetBrainsMono Nerd Font
+config-file = ?auto/theme.ghostty
+font-family = "JetBrainsMono Nerd Font"
 font-size = 10
 font-thicken = true
 font-feature = liga
 bold-is-bright = true
 
 background-opacity = 0.8
-window-decoration = false
 window-padding-x = 6
 window-padding-y = 4
 window-padding-balance = true
 
-# Dim inactive splits to stay focused
-unfocused-split-opacity = 0.3
-
+# This removes the title bar and borders on launch
+window-decoration = false
 cursor-style = bar
 cursor-style-blink = true
-
-#resize-overlay = always
-#resize-overlay-position = center
-#resize-overlay-duration = 750ms
-#window-step-resize = true
 
 # ─────────────────────────────────────────
 # BEHAVIOUR
@@ -35,25 +28,30 @@ copy-on-select = clipboard
 scrollback-limit = 10000
 confirm-close-surface = false
 link-url = true
-title = Ghostty
 
 clipboard-read = allow
 clipboard-write = allow
 
 shell-integration = detect
-# Combined features into one line
 shell-integration-features = cursor,sudo,title,ssh-terminfo
 
 split-inherit-working-directory = true
 tab-inherit-working-directory = true
 
+gtk-single-instance = false
+quit-after-last-window-closed-delay = 5m
+
 # ─────────────────────────────────────────
-# QUICK TERMINAL
+# QUICK TERMINAL & SHADERS
 # ─────────────────────────────────────────
 quick-terminal-position = top
 quick-terminal-screen = main
 quick-terminal-animation-duration = 0.2
 quick-terminal-autohide = true
+
+custom-shader = shaders/blaze.glsl
+custom-shader-animation = always
+fullscreen = true
 
 # ─────────────────────────────────────────
 # KEYBINDINGS
@@ -97,20 +95,4 @@ keybind = ctrl+zero=reset_font_size
 keybind = ctrl+shift+comma=reload_config
 keybind = ctrl+f11=toggle_quick_terminal
 keybind = ctrl+shift+f11=toggle_window_decorations
-
-# Advanced: Add a keybind to inspect the current config
-# (Helps when debugging your setup)
 keybind = ctrl+shift+i=inspector:toggle
-#background-blur-radius = 20
-gtk-single-instance = true
-# Keeps the process alive for 5 minutes after the last window closes
-# so the next one opens instantly.
-quit-after-last-window-closed-delay = 5m
-
-#custom-shader = shaders/plasma.glsl
-#custom-shader = shaders/tail.glsl
-#custom-shader = shaders/data.glsl
-custom-shader = shaders/blaze.glsl
-#custom-shader = shaders/lightning.glsl
-
-custom-shader-animation = always
