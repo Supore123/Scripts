@@ -48,6 +48,7 @@ else
       --no-first-run \
       --no-default-browser-check \
       --start-maximized \
+      --disable-features=AudioServiceOutOfProcess %U \
       "${urls[@]}" >/dev/null 2>&1 &
     disown
   else
