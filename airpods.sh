@@ -57,18 +57,18 @@ log "Connected successfully!"
 
 # Show battery
 show_battery() {
-    info=$(bluetoothctl info "$MAC")
-    left=$(echo "$info" | grep "Battery Percentage (L)" | awk '{print $4}' || true)
-    right=$(echo "$info" | grep "Battery Percentage (R)" | awk '{print $4}' || true)
-    case_battery=$(echo "$info" | grep "Battery Percentage (Case)" | awk '{print $4}' || true)
+  info=$(bluetoothctl info "$MAC")
+  left=$(echo "$info" | grep "Battery Percentage (L)" | awk '{print $4}' || true)
+  right=$(echo "$info" | grep "Battery Percentage (R)" | awk '{print $4}' || true)
+  case_battery=$(echo "$info" | grep "Battery Percentage (Case)" | awk '{print $4}' || true)
 
-    if [ -n "$left" ] || [ -n "$right" ] || [ -n "$case_battery" ]; then
-        [ -n "$left" ] && log "Left AirPod: $left%"
-        [ -n "$right" ] && log "Right AirPod: $right%"
-        [ -n "$case_battery" ] && log "Case: $case_battery%"
-    else
-        log "Battery info not available."
-    fi
+  if [ -n "$left" ] || [ -n "$right" ] || [ -n "$case_battery" ]; then
+    [ -n "$left" ] && log "Left AirPod: $left%"
+    [ -n "$right" ] && log "Right AirPod: $right%"
+    [ -n "$case_battery" ] && log "Case: $case_battery%"
+  else
+    log "Battery info not available."
+  fi
 }
 
 show_battery
